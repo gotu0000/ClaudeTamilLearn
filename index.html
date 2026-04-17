@@ -15,6 +15,13 @@
       button { font-family: inherit; }
       input { font-family: inherit; }
     </style>
+    <script>
+      // Restore path from 404.html redirect query param
+      (function () {
+        var p = new URLSearchParams(window.location.search).get('p');
+        if (p) window.history.replaceState(null, '', '/' + decodeURIComponent(p) + window.location.hash);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

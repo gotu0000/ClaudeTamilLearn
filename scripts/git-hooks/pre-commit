@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Fail the commit if docs/FILE_MAP.md is out of sync with the JSDoc headers in src/.
+# Installed by scripts/setup-hooks.sh.
+
+set -e
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "pre-commit: python3 not found on PATH, skipping FILE_MAP check." >&2
+  exit 0
+fi
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+python3 "$REPO_ROOT/scripts/gen_file_map.py" --check

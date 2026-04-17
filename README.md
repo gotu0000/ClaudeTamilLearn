@@ -6,9 +6,12 @@ A Duolingo-style Tamil learning app for English speakers who want to understand 
 
 ```bash
 npm install
+./scripts/setup-hooks.sh   # one-time: installs pre-commit FILE_MAP check
 npm run dev
 # Open http://localhost:3000
 ```
+
+See `docs/FILE_MAP.md` for an auto-generated per-file reference (exports, dependencies, connections).
 
 ## Features
 

@@ -16,6 +16,10 @@ const V = {
 const LVLS = [0, 100, 250, 500, 800, 1200, 1800, 2500, 3500, 5000, 7000, 10000];
 const LNMS = ["Seedling","Sprout","Sapling","Blooming","Flourishing","Skilled","Fluent","Advanced","Expert","Master","Legend","Sage"];
 const LESSON_LEN = 10;
+const BATCH_SIZE = 7;
+
+const tokenizeTamil = (text) => text.split(/\s+/).map(t => t.replace(/[.,!?;:"'()]/g, "")).filter(Boolean);
+const sentenceAllLearned = (sentence, learnedSet) => tokenizeTamil(sentence.tamil).every(t => learnedSet.has(t));
 
 const btnS = (bg, x = {}) => ({ width:"100%", padding:"16px 20px", background:bg, border:"none", borderRadius:V.rad, color:"#fff", fontSize:16, fontWeight:700, cursor:"pointer", fontFamily:V.fn, ...x });
 const optS = (isSel, isCorr, isDone) => {
@@ -49,6 +53,8 @@ export default function App() {
   const [built, setBuilt] = useState([]);
   const [rem, setRem] = useState([]);
   const [ci, setCi] = useState(0);
+  const [introBatch, setIntroBatch] = useState([]);
+  const [cardsMode, setCardsMode] = useState("intro");
   const [dSearch, setDSearch] = useState("");
   const [dTopic, setDTopic] = useState("all");
 
@@ -79,15 +85,40 @@ export default function App() {
     const v = getVocab(topicId);
     if(!v||!v.words?.length) return;
     setStep(0); setHearts(5); setEarnXP(0); setDone(false); setSel(null); setBuilt([]); setRem([]);
-    const ls = tLessons[topicId]||0;
-    if(ls===0){setCi(0);setScr("cards");}
-    else{const d=Math.min(Math.floor(ls/3),2);const e=generateExercise(v.words,v.sentences||[],d);setEx(e);if(e.type==="build")setRem([...e.scrambled]);setScr("lesson");}
-  },[tLessons]);
+    const learnedForTopic = learned.filter(w=>w.topicId===topicId);
+    const introducedCount = learnedForTopic.length;
+    const remaining = v.words.slice(introducedCount);
+    if(remaining.length>0){
+      setIntroBatch(remaining.slice(0,BATCH_SIZE));
+      setCardsMode("intro");setCi(0);setScr("cards");
+    } else {
+      const learnedSet = new Set(learnedForTopic.map(w=>w.tamil));
+      const allowedSentences = (v.sentences||[]).filter(s=>sentenceAllLearned(s,learnedSet));
+      const d = Math.min(Math.floor((tLessons[topicId]||0)/3),2);
+      const e = generateExercise(learnedForTopic,allowedSentences,d);
+      setEx(e);if(e.type==="build")setRem([...e.scrambled]);setScr("lesson");
+    }
+  },[tLessons,learned]);
+
+  const reviewCards = useCallback((topicId)=>{
+    const t=TOPICS.find(x=>x.id===topicId);if(!t)return;
+    const learnedForTopic = learned.filter(w=>w.topicId===topicId);
+    if(learnedForTopic.length===0)return;
+    setCurT(t);setIntroBatch(learnedForTopic);setCardsMode("review");setCi(0);setScr("cards");
+  },[learned]);
 
   const startFromCards = useCallback(()=>{
-    const v=getVocab(curT.id);const e=generateExercise(v.words,v.sentences||[],0);
+    const v=getVocab(curT.id);
+    const nw=[...learned];
+    introBatch.forEach(w=>{if(!nw.find(l=>l.tamil===w.tamil&&l.topicId===curT.id))nw.push({...w,topicId:curT.id});});
+    setLearned(nw);saveAll({learned:nw});
+    const learnedForTopic = nw.filter(w=>w.topicId===curT.id);
+    const learnedSet = new Set(learnedForTopic.map(w=>w.tamil));
+    const allowedSentences = (v.sentences||[]).filter(s=>sentenceAllLearned(s,learnedSet));
+    const d = Math.min(Math.floor((tLessons[curT.id]||0)/3),2);
+    const e=generateExercise(learnedForTopic,allowedSentences,d);
     setEx(e);if(e.type==="build")setRem([...e.scrambled]);setStep(0);setScr("lesson");
-  },[curT]);
+  },[curT,learned,introBatch,tLessons,saveAll]);
 
   const handlePick = (o)=>{
     if(done)return;setSel(o);setDone(true);setOk(o.correct);
@@ -103,15 +134,17 @@ export default function App() {
       const today=new Date().toDateString();
       const nx=xp+earnXP, ns=lastDay===today?streak:streak+1;
       const nl={...tLessons,[curT.id]:(tLessons[curT.id]||0)+1};
-      const v=getVocab(curT.id);const nw=[...learned];
-      if(v)v.words.forEach(w=>{if(!nw.find(l=>l.tamil===w.tamil))nw.push({...w,topicId:curT.id});});
-      setXP(nx);setStreak(ns);setLastDay(today);setTLessons(nl);setLearned(nw);
-      saveAll({xp:nx,streak:ns,lastDay:today,tLessons:nl,srData:srData,learned:nw});
+      setXP(nx);setStreak(ns);setLastDay(today);setTLessons(nl);
+      saveAll({xp:nx,streak:ns,lastDay:today,tLessons:nl,srData:srData,learned});
       setScr("result");return;
     }
     setStep(s=>s+1);setDone(false);setSel(null);setBuilt([]);setRem([]);
-    const v=getVocab(curT.id);const d=Math.min(Math.floor((tLessons[curT.id]||0)/3),2);
-    const e=generateExercise(v.words,v.sentences||[],d);setEx(e);if(e.type==="build")setRem([...e.scrambled]);
+    const v=getVocab(curT.id);
+    const learnedForTopic = learned.filter(w=>w.topicId===curT.id);
+    const learnedSet = new Set(learnedForTopic.map(w=>w.tamil));
+    const allowedSentences = (v.sentences||[]).filter(s=>sentenceAllLearned(s,learnedSet));
+    const d=Math.min(Math.floor((tLessons[curT.id]||0)/3),2);
+    const e=generateExercise(learnedForTopic,allowedSentences,d);setEx(e);if(e.type==="build")setRem([...e.scrambled]);
   },[hearts,step,xp,earnXP,streak,lastDay,tLessons,curT,srData,learned,saveAll]);
 
   const startReview = useCallback(()=>{
@@ -161,7 +194,9 @@ export default function App() {
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
               {TOPICS.filter(t=>vocabData[t.id]).map(t=>{
                 const ls=tLessons[t.id]||0,mast=ls>=10;
+                const learnedCt = learned.filter(w=>w.topicId===t.id).length;
                 return(<div key={t.id} onClick={()=>startTopic(t.id)} style={{background:`linear-gradient(145deg,${t.color}15,${t.color}08)`,border:`1.5px solid ${t.color}${mast?"66":"33"}`,borderRadius:20,padding:"18px 12px",textAlign:"center",cursor:"pointer",transition:"all 0.2s",position:"relative"}}>
+                  {learnedCt>0&&<button onClick={e=>{e.stopPropagation();reviewCards(t.id);}} title="Review cards" style={{position:"absolute",top:6,left:8,background:"rgba(255,255,255,0.08)",border:"none",borderRadius:8,padding:"3px 7px",fontSize:11,color:V.dim,cursor:"pointer",fontFamily:V.fn}}>📖 {learnedCt}</button>}
                   {mast&&<div style={{position:"absolute",top:6,right:8,fontSize:13}}>👑</div>}
                   <div style={{fontSize:26,marginBottom:4}}>{t.emoji}</div>
                   <div style={{fontSize:13,fontWeight:700,color:V.txt}}>{t.title}</div>
@@ -189,13 +224,15 @@ export default function App() {
 
   // ═══ WORD CARDS ═════════════════════════════════════════════════
   if(scr==="cards"){
-    const v=getVocab(curT.id);const intro=v.words.slice(0,8);const w=intro[ci];
+    const intro=introBatch;if(!intro.length){setScr("home");return null;}
+    const w=intro[ci];const isReview=cardsMode==="review";
+    const isLast=ci+1>=intro.length;
     return(
       <div style={{minHeight:"100vh",background:V.bg,fontFamily:V.fn,color:V.txt}}>
         <div style={{padding:"20px 20px 10px"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
             <button onClick={()=>setScr("home")} style={{background:"none",border:"none",color:V.dim,fontSize:18,cursor:"pointer"}}>✕</button>
-            <div style={{fontSize:13,color:V.dim,fontWeight:500}}>New Words · {ci+1}/{intro.length}</div>
+            <div style={{fontSize:13,color:V.dim,fontWeight:500}}>{isReview?"Review":"New Words"} · {ci+1}/{intro.length}</div>
             <div style={{width:24}}/>
           </div>
           <Prog pct={(ci+1)/intro.length*100} color={curT.color}/>
@@ -208,8 +245,8 @@ export default function App() {
           <div style={{fontSize:20,fontWeight:600,color:"#ddd"}}>{w.english}</div>
         </div>
         <div style={{padding:"0 20px"}}>
-          <button onClick={()=>{speak(w.tamil,curT.id);if(ci+1<intro.length)setCi(ci+1);else startFromCards();}} style={btnS(`linear-gradient(135deg,${curT.color},${curT.color}bb)`)}>
-            {ci+1<intro.length?"Next Word →":"Start Practice! 🎯"}
+          <button onClick={()=>{speak(w.tamil,curT.id);if(!isLast)setCi(ci+1);else if(isReview)setScr("home");else startFromCards();}} style={btnS(`linear-gradient(135deg,${curT.color},${curT.color}bb)`)}>
+            {!isLast?"Next Word →":(isReview?"Done ✓":"Start Practice! 🎯")}
           </button>
         </div>
         <style>{`@keyframes fadeSlide{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}`}</style>

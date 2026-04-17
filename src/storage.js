@@ -1,3 +1,15 @@
+/**
+ * @file storage.js
+ * @module Storage
+ * @description localStorage abstraction. Namespaces all keys under `tamillearn:` and handles JSON (de)serialization with silent error swallowing.
+ * @exports
+ *   - KEYS: constant map of namespaced storage keys (XP, STREAK, LAST_DAY, TOPIC_LESSONS, SR_DATA, LEARNED_WORDS)
+ *   - storageGet(key, fallback): read + JSON.parse + fall back on miss/error
+ *   - storageSet(key, value): JSON.stringify + write (errors logged, not thrown)
+ *   - storageClear(): remove every `tamillearn:` key
+ * @depends (none)
+ * @connects Loaded by App.jsx on mount; written after each lesson via saveAll().
+ */
 const NS = "tamillearn";
 const k = (key) => `${NS}:${key}`;
 

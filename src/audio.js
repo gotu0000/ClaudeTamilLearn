@@ -1,10 +1,12 @@
 /**
- * Audio Engine
- * Plays pre-generated MP3 files from public/audio/.
- * Falls back to Web Speech API if audio file not found.
- *
- * File naming: MD5 hash of Tamil text → {topicId}/{hash}.mp3
- * Slow version: {topicId}/{hash}_slow.mp3
+ * @file audio.js
+ * @module Audio
+ * @description Tamil audio playback. Tries a pre-generated MP3 at `{BASE}/audio/{topicId}/{hash}.mp3` (SHA-256, first 16 hex chars, matches scripts/generate_audio.py), falls back to the Web Speech API if the file is missing.
+ * @exports
+ *   - speak(text, topicId, slow): async; plays audio file or falls back to TTS. `slow=true` uses `_slow.mp3` suffix or a 0.6 TTS rate.
+ *   - stopSpeaking(): cancels any active TTS utterance.
+ * @depends (none)
+ * @connects Called from App.jsx (Spk button component, card intros, listen/fill exercises) and driven by data from src/data/vocab-data.json.
  */
 
 let tamilVoice = null;

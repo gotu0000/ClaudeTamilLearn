@@ -1,6 +1,12 @@
 /**
- * SM-2 Spaced Repetition (same as Anki)
- * Quality: 0=blackout, 5=perfect. App uses 4=correct, 1=incorrect.
+ * @file sm2.js
+ * @module SM2
+ * @description SM-2 spaced-repetition algorithm (Anki-style). Quality scale: 0 blackout … 5 perfect; App.jsx passes 4 on correct answers, 1 on incorrect.
+ * @exports
+ *   - sm2(item, quality): returns {ef, interval, reps, nextReview} given prior state + quality rating
+ *   - isDue(srState): true if the item has no review state or its nextReview has passed
+ * @depends (none)
+ * @connects Called from App.jsx handlePick (update on answer) and startReview (gather due words).
  */
 export function sm2(item, quality) {
   let { ef = 2.5, interval = 1, reps = 0 } = item || {};

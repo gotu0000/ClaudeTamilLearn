@@ -1,3 +1,12 @@
+/**
+ * @file topics.js
+ * @module Topics
+ * @description Static metadata for the 20 topic tiles (id, title, emoji, color). No vocabulary here — words/sentences live in vocab-data.json keyed by the same id.
+ * @exports
+ *   - TOPICS: array of {id, title, emoji, color}
+ * @depends (none)
+ * @connects Rendered on the home grid in App.jsx; keys match vocab-data.json and determine the order of topics.
+ */
 export const TOPICS = [
   { id: "verbs", title: "Common Verbs", emoji: "🏃", color: "#DC2626" },
   { id: "greetings", title: "Greetings & Basics", emoji: "🙏", color: "#D94F3B" },

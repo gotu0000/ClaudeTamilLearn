@@ -1,3 +1,12 @@
+/**
+ * @file App.jsx
+ * @module App
+ * @description Root React component. Owns all UI, state (xp, streak, lessons, SR, learned words), and lesson orchestration. Five screens: home, cards, lesson, result, dict.
+ * @exports
+ *   - default App(): the root component rendered by main.jsx
+ * @depends src/storage.js, src/audio.js, src/sm2.js, src/exercises.js, src/data/topics.js, src/data/vocab-data.json
+ * @connects Loads persisted state on mount via storage.js; drives the whole UX.
+ */
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { storageGet, storageSet, KEYS } from "./storage";
 import { speak } from "./audio";

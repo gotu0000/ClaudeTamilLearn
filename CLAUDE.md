@@ -91,3 +91,20 @@ All colors, fonts, spacing defined in `V` object at top of `App.jsx`. Dark theme
 - All Tamil text must include: `tamil`, `transliteration`, `english` fields
 - Use spoken/colloquial Tamil, not literary Tamil
 - Test in browser after changes: `npm run dev`
+
+## Documentation (zero-drift convention)
+
+Every `src/**/*.{js,jsx}` file MUST start with a JSDoc header containing these tags:
+`@file`, `@module`, `@description`, `@exports`, `@depends`, `@connects`.
+
+`docs/FILE_MAP.md` is auto-generated from these headers. After editing any source file:
+
+```bash
+python3 scripts/gen_file_map.py --write
+git add docs/FILE_MAP.md
+```
+
+A pre-commit hook (`./scripts/setup-hooks.sh` installs it) and the `FILE_MAP check`
+GitHub Action both run `gen_file_map.py --check` and block commits / PRs where
+the map is out of sync with the headers. Never hand-edit `docs/FILE_MAP.md` —
+edit the JSDoc header in the relevant `src/` file and regenerate.

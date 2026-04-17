@@ -1,3 +1,18 @@
+/**
+ * @file exercises.js
+ * @module Exercises
+ * @description Pure exercise generators. Four types: word-match, listen, fill-blank, sentence-build. Difficulty-gated in generateExercise: 0=match+listen, 1=+fill, 2=+build.
+ * @exports
+ *   - shuffle(arr): Fisher-Yates copy
+ *   - pick(arr, n): shuffled slice of n
+ *   - genWordMatch(words): {type:"word-match", options:[{label,correct}], xp:10}
+ *   - genListen(words, sentences): {type:"listen", options, xp:15}
+ *   - genFillBlank(words, sentences): {type:"fill", options, xp:20}; falls back to word-match on tiny sentences or empty sentence pool
+ *   - genSentenceBuild(sentences): {type:"build", correctOrder, scrambled, xp:25}; returns null if insufficient tokens or empty pool
+ *   - generateExercise(words, sentences, difficulty): picks a suitable generator based on difficulty and sentence availability
+ * @depends (none)
+ * @connects Called from App.jsx startTopic / startFromCards / nextStep to build each lesson step.
+ */
 export function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {

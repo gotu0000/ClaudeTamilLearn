@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   // For GitHub Pages: set base to repo name
   // Change 'tamil-learn' to your actual repo name if different
-  base: process.env.GITHUB_ACTIONS ? '/tamil-learn/' : '/',
+  base: process.env.GITHUB_ACTIONS ? '/ClaudeTamilLearn/' : '/',
   server: {
     port: 3000,
     open: true

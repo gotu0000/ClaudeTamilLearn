@@ -46,6 +46,7 @@ export function genListen(words, sentences) {
 }
 
 export function genFillBlank(words, sentences) {
+  if (!sentences.length) return genWordMatch(words);
   const s = sentences[Math.floor(Math.random() * sentences.length)];
   const ew = s.english.split(" ");
   if (ew.length < 3) return genWordMatch(words);
@@ -62,6 +63,7 @@ export function genFillBlank(words, sentences) {
 }
 
 export function genSentenceBuild(sentences) {
+  if (!sentences.length) return null;
   const s = sentences[Math.floor(Math.random() * sentences.length)];
   const tw = s.tamil.split(" ");
   if (tw.length < 3) return null;

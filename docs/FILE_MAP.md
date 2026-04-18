@@ -45,6 +45,20 @@ _Auto-generated from JSDoc headers in `src/`. Run `python3 scripts/gen_file_map.
 
 **Connects:** Rendered on the home grid in App.jsx; keys match vocab-data.json and determine the order of topics.
 
+## `src/engine/grammar-tips.js`
+
+**Module:** GrammarTips
+
+**Description:** Surface-pattern → rule map. Given a Tamil token, return a one-line grammar rule that explains why the ending is what it is ("-ல marks negative", "-க்கு means 'to'"). Low-precision by design: longest suffix wins, no match returns null, and we keep the rule set small to avoid false positives (e.g. a noun that happens to end in -ல).
+
+**Exports:**
+
+- tipFor(tamilToken): string | null
+
+**Depends on:** (none)
+
+**Connects:** Called from src/exercises.js genFillBlank to attach `grammarTip` to the exercise; rendered by App.jsx in the answer-feedback banner so the learner sees why the blank was what it was.
+
 ## `src/engine/morphology.js`
 
 **Module:** Morphology
@@ -80,7 +94,7 @@ _Auto-generated from JSDoc headers in `src/`. Run `python3 scripts/gen_file_map.
 
 **Module:** Exercises
 
-**Description:** Pure exercise generators. Four types: word-match, listen, fill-blank, sentence-build. Difficulty-gated in generateExercise: 0=match+listen, 1=+fill, 2=+build. The `sentences` argument is the learner's introduced-sentence slice (not the full topic pool); fill/build only fire when this slice is non-empty. genFillBlank is POS-aware: for primitive-backed sentences it blanks a content primitive (verb > destination > pronoun) and offers same-POS distractors; for legacy sentences it uses a stopword filter so the blank never lands on "am/are/is/the/to" etc.
+**Description:** Pure exercise generators. Four types: word-match, listen, fill-blank, sentence-build. Difficulty-gated in generateExercise: 0=match+listen, 1=+fill, 2=+build. The `sentences` argument is the learner's introduced-sentence slice (not the full topic pool); fill/build only fire when this slice is non-empty. genFillBlank is POS-aware: for primitive-backed sentences it blanks a content primitive (verb > destination > pronoun) and offers same-POS distractors; for legacy sentences it uses a stopword filter so the blank never lands on "am/are/is/the/to" etc. Fill exercises carry `blankTamil` (the Tamil token being asked about) and `grammarTip` (a one-line rule explaining its ending, from engine/grammar-tips.js).
 
 **Exports:**
 
@@ -88,11 +102,11 @@ _Auto-generated from JSDoc headers in `src/`. Run `python3 scripts/gen_file_map.
 - pick(arr, n): shuffled slice of n
 - genWordMatch(words): {type:"word-match", options:[{label,correct}], xp:10}
 - genListen(words, sentences): {type:"listen", options, xp:15}
-- genFillBlank(words, sentences): {type:"fill", options, xp:20, blankTamil}; falls back to word-match on tiny sentences or empty sentence pool. `blankTamil` is the Tamil token (or null) the UI should highlight — the word whose English gloss is being blanked.
+- genFillBlank(words, sentences): {type:"fill", options, xp:20, blankTamil, grammarTip}; falls back to word-match on tiny sentences or empty sentence pool
 - genSentenceBuild(sentences): {type:"build", correctOrder, scrambled, xp:25}; returns null if insufficient tokens or empty pool
 - generateExercise(words, sentences, difficulty): picks a suitable generator based on difficulty and sentence availability
 
-**Depends on:** (none)
+**Depends on:** src/engine/grammar-tips.js
 
 **Connects:** Called from App.jsx startTopic / startFromCards / nextStep to build each lesson step.
 

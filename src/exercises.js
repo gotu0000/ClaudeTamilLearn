@@ -1,18 +1,20 @@
 /**
  * @file exercises.js
  * @module Exercises
- * @description Pure exercise generators. Four types: word-match, listen, fill-blank, sentence-build. Difficulty-gated in generateExercise: 0=match+listen, 1=+fill, 2=+build. The `sentences` argument is the learner's introduced-sentence slice (not the full topic pool); fill/build only fire when this slice is non-empty. genFillBlank is POS-aware: for primitive-backed sentences it blanks a content primitive (verb > destination > pronoun) and offers same-POS distractors; for legacy sentences it uses a stopword filter so the blank never lands on "am/are/is/the/to" etc.
+ * @description Pure exercise generators. Four types: word-match, listen, fill-blank, sentence-build. Difficulty-gated in generateExercise: 0=match+listen, 1=+fill, 2=+build. The `sentences` argument is the learner's introduced-sentence slice (not the full topic pool); fill/build only fire when this slice is non-empty. genFillBlank is POS-aware: for primitive-backed sentences it blanks a content primitive (verb > destination > pronoun) and offers same-POS distractors; for legacy sentences it uses a stopword filter so the blank never lands on "am/are/is/the/to" etc. Fill exercises carry `blankTamil` (the Tamil token being asked about) and `grammarTip` (a one-line rule explaining its ending, from engine/grammar-tips.js).
  * @exports
  *   - shuffle(arr): Fisher-Yates copy
  *   - pick(arr, n): shuffled slice of n
  *   - genWordMatch(words): {type:"word-match", options:[{label,correct}], xp:10}
  *   - genListen(words, sentences): {type:"listen", options, xp:15}
- *   - genFillBlank(words, sentences): {type:"fill", options, xp:20, blankTamil}; falls back to word-match on tiny sentences or empty sentence pool. `blankTamil` is the Tamil token (or null) the UI should highlight — the word whose English gloss is being blanked.
+ *   - genFillBlank(words, sentences): {type:"fill", options, xp:20, blankTamil, grammarTip}; falls back to word-match on tiny sentences or empty sentence pool
  *   - genSentenceBuild(sentences): {type:"build", correctOrder, scrambled, xp:25}; returns null if insufficient tokens or empty pool
  *   - generateExercise(words, sentences, difficulty): picks a suitable generator based on difficulty and sentence availability
- * @depends (none)
+ * @depends src/engine/grammar-tips.js
  * @connects Called from App.jsx startTopic / startFromCards / nextStep to build each lesson step.
  */
+import { tipFor } from "./engine/grammar-tips.js";
+
 const STOPWORDS = new Set([
   "a","an","the","am","is","are","was","were","be","been","being",
   "to","of","for","in","on","at","by","with","from",
@@ -99,10 +101,11 @@ export function genFillBlank(words, sentences) {
           .filter((x) => x && x.toLowerCase() !== blank.toLowerCase());
         const dist = pick(sameSposOthers, 3);
         const tokMatch = s.tokens?.find((t) => t.id === target._primId);
+        const blankTamil = tokMatch ? tokMatch.t : null;
         return {
           type: "fill", tamil: s.tamil, transliteration: s.transliteration || "",
           display, answer: blank, targetWord: s,
-          blankTamil: tokMatch ? tokMatch.t : null,
+          blankTamil, grammarTip: tipFor(blankTamil),
           options: shuffle([blank, ...dist].slice(0, 4).map((o) => ({ label: o, correct: o === blank }))),
           xp: 20,
         };
@@ -139,7 +142,7 @@ export function genFillBlank(words, sentences) {
   }
   return {
     type: "fill", tamil: s.tamil, transliteration: s.transliteration,
-    display, answer: blank, targetWord: s, blankTamil,
+    display, answer: blank, targetWord: s, blankTamil, grammarTip: tipFor(blankTamil),
     options: shuffle([blank, ...dist].slice(0, 4).map((o) => ({ label: o, correct: o === blank }))),
     xp: 20,
   };

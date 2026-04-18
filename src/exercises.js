@@ -13,7 +13,7 @@
  * @depends src/engine/grammar-tips.js
  * @connects Called from App.jsx startTopic / startFromCards / nextStep to build each lesson step.
  */
-import { tipFor } from "./engine/grammar-tips.js";
+import { tipFor, universalTamilFor } from "./engine/grammar-tips.js";
 
 const STOPWORDS = new Set([
   "a","an","the","am","is","are","was","were","be","been","being",
@@ -130,15 +130,18 @@ export function genFillBlank(words, sentences) {
   );
   // Reverse-lookup the Tamil token matching the blanked English word, so the UI
   // can highlight which Tamil word the learner is being asked to identify.
+  // Fall back to the universal pronoun map when the topic's word list doesn't
+  // carry the word (e.g. "I" / "you" aren't in "phrases" but are in the sentence).
   let blankTamil = null;
   const wordMatch = words.find((w) => {
     const head = (w.english || "").toLowerCase().split(" / ")[0].split(" ")[0];
     return head === blank.toLowerCase();
   });
-  if (wordMatch && wordMatch.tamil) {
+  const tamilCandidate = (wordMatch && wordMatch.tamil) || universalTamilFor(blank);
+  if (tamilCandidate) {
     const toks = s.tamil.split(" ");
-    const hit = toks.find((t) => t === wordMatch.tamil || t.includes(wordMatch.tamil));
-    blankTamil = hit || wordMatch.tamil;
+    const hit = toks.find((t) => t === tamilCandidate || t.includes(tamilCandidate));
+    blankTamil = hit || tamilCandidate;
   }
   return {
     type: "fill", tamil: s.tamil, transliteration: s.transliteration,

@@ -49,15 +49,16 @@ _Auto-generated from JSDoc headers in `src/`. Run `python3 scripts/gen_file_map.
 
 **Module:** GrammarTips
 
-**Description:** Surface-pattern → rule map. Given a Tamil token, return a one-line grammar rule that explains why the ending is what it is ("-ல marks negative", "-க்கு means 'to'"). Low-precision by design: longest suffix wins, no match returns null, and we keep the rule set small to avoid false positives (e.g. a noun that happens to end in -ல).
+**Description:** Cross-cutting grammar aids. Two exports: `tipFor(tamilToken)` is a surface-pattern → rule map ("-ல marks negative", "-க்கு means 'to'"), and `universalTamilFor(englishWord)` maps high-frequency English words (mainly subject pronouns) to their colloquial Tamil equivalents so fill-blank can highlight them even when the topic's word list doesn't contain them. Both are intentionally narrow to avoid false positives; tune by adding more high-precision entries, not regex.
 
 **Exports:**
 
 - tipFor(tamilToken): string | null
+- universalTamilFor(englishWord): string | null
 
 **Depends on:** (none)
 
-**Connects:** Called from src/exercises.js genFillBlank to attach `grammarTip` to the exercise; rendered by App.jsx in the answer-feedback banner so the learner sees why the blank was what it was.
+**Connects:** Called from src/exercises.js genFillBlank — tipFor attaches `grammarTip` to the exercise (rendered in App.jsx feedback banner); universalTamilFor is the pronoun fallback used when reverse-lookup from the topic word list fails.
 
 ## `src/engine/morphology.js`
 

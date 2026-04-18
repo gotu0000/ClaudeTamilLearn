@@ -1,0 +1,50 @@
+{
+  "primitives": {
+    "pron-1s":  { "pos":"pronoun", "tamil":"நான்",  "transliteration":"naan",    "english":"I",   "agreement":"1s",  "be":"am",  "beCap":"Am",  "audioText":"நான்" },
+    "pron-2s":  { "pos":"pronoun", "tamil":"நீ",    "transliteration":"nee",     "english":"you", "agreement":"2s",  "be":"are", "beCap":"Are", "audioText":"நீ" },
+    "pron-3sm": { "pos":"pronoun", "tamil":"அவன்",  "transliteration":"avan",    "english":"he",  "agreement":"3sm", "be":"is",  "beCap":"Is",  "audioText":"அவன்" },
+    "pron-3sf": { "pos":"pronoun", "tamil":"அவ",    "transliteration":"ava",     "english":"she", "agreement":"3sf", "be":"is",  "beCap":"Is",  "audioText":"அவ" },
+    "pron-1pl": { "pos":"pronoun", "tamil":"நாம",   "transliteration":"naama",   "english":"we",  "agreement":"1pl", "be":"are", "beCap":"Are", "audioText":"நாம" },
+    "pron-2pl": { "pos":"pronoun", "tamil":"நீங்க", "transliteration":"neenga",  "english":"you", "agreement":"2pl", "be":"are", "beCap":"Are", "audioText":"நீங்க" },
+
+    "v-go": {
+      "pos":"verb", "tamil":"போ", "transliteration":"pō", "english":"go", "englishIng":"going",
+      "audioText":"போறேன்",
+      "hint":"e.g. போறேன் — I'm going",
+      "present":  { "1s":"போறேன்",   "2s":"போற",    "3sm":"போறான்",   "3sf":"போறா",   "1pl":"போறோம்",   "2pl":"போறீங்க" },
+      "negPresent":{ "1s":"போகல",    "2s":"போகல",   "3sm":"போகல",     "3sf":"போகல",   "1pl":"போகல",     "2pl":"போகல" }
+    },
+    "v-come": {
+      "pos":"verb", "tamil":"வா", "transliteration":"vā", "english":"come", "englishIng":"coming",
+      "audioText":"வரேன்",
+      "hint":"e.g. வரேன் — I'm coming",
+      "present":  { "1s":"வரேன்",    "2s":"வர",     "3sm":"வரான்",    "3sf":"வரா",    "1pl":"வரோம்",    "2pl":"வரீங்க" },
+      "negPresent":{ "1s":"வரல",     "2s":"வரல",    "3sm":"வரல",      "3sf":"வரல",    "1pl":"வரல",      "2pl":"வரல" }
+    },
+    "v-return": {
+      "pos":"verb", "tamil":"திரும்பு", "transliteration":"thirumbu", "english":"return", "englishIng":"returning",
+      "audioText":"திரும்புறேன்",
+      "hint":"e.g. திரும்புறேன் — I'm returning",
+      "present":  { "1s":"திரும்புறேன்","2s":"திரும்புற","3sm":"திரும்புறான்","3sf":"திரும்புறா","1pl":"திரும்புறோம்","2pl":"திரும்புறீங்க" },
+      "negPresent":{ "1s":"திரும்பல",  "2s":"திரும்பல","3sm":"திரும்பல",    "3sf":"திரும்பல", "1pl":"திரும்பல",    "2pl":"திரும்பல" }
+    },
+
+    "n-home":   { "pos":"noun", "tamil":"வீடு",    "transliteration":"veedu",    "english":"home",    "dative":"வீட்டுக்கு",   "toGloss":"home",           "audioText":"வீடு" },
+    "n-town":   { "pos":"noun", "tamil":"ஊர்",      "transliteration":"oor",      "english":"town",    "dative":"ஊருக்கு",       "toGloss":"to town",        "audioText":"ஊர்" },
+    "n-temple": { "pos":"noun", "tamil":"கோயில்",  "transliteration":"kōyil",    "english":"temple",  "dative":"கோயிலுக்கு",   "toGloss":"to the temple",  "audioText":"கோயில்" },
+    "n-shop":   { "pos":"noun", "tamil":"கடை",      "transliteration":"kaḍai",    "english":"shop",    "dative":"கடைக்கு",       "toGloss":"to the shop",    "audioText":"கடை" },
+    "n-cinema": { "pos":"noun", "tamil":"சினிமா",  "transliteration":"sinimā",   "english":"cinema",  "dative":"சினிமாவுக்கு",  "toGloss":"to the cinema",  "audioText":"சினிமா" },
+    "n-school": { "pos":"noun", "tamil":"பள்ளி",    "transliteration":"paḷḷi",    "english":"school",  "dative":"பள்ளிக்கு",     "toGloss":"to school",      "audioText":"பள்ளி" }
+  },
+  "topics": {
+    "travel": {
+      "title": "Get around",
+      "groups": {
+        "pronouns":     ["pron-1s","pron-2s","pron-3sm","pron-3sf","pron-1pl","pron-2pl"],
+        "verbs":        ["v-go","v-come","v-return"],
+        "destinations": ["n-home","n-town","n-temple","n-shop","n-cinema","n-school"]
+      },
+      "templates": ["SV","SDV","SV_Q","Neg_SV"]
+    }
+  }
+}

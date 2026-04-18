@@ -1,10 +1,10 @@
 /**
  * @file App.jsx
  * @module App
- * @description Root React component. Owns all UI, state (xp, streak, lessons, SR, learned words, learned sentences), and lesson orchestration. Five screens: home, cards (intro / review / sentence-intro), lesson, result, dict. Words and sentences are both first-class learnables: startTopic interleaves word-intro batches (BATCH_SIZE words) and sentence-intro batches (SENTENCE_BATCH_SIZE sentences) based on a debt rule so sentences land shortly after the first word batch instead of only after all words are exhausted.
+ * @description Root React component. Owns all UI, state (xp, streak, lessons, SR, learned words, learned sentences, learned primitives), and lesson orchestration. Five screens: home, cards (intro / review / sentence-intro / primitive-intro), lesson, result, dict. Two content backends run side by side: legacy vocab-data.json drives the original 19 topics with word-and-sentence intros; the new primitive-backed grammar engine drives the pilot topic (travel / "Get around"), showing primitives on intro cards and composing exercise sentences at runtime via engine/templates.js.
  * @exports
  *   - default App(): the root component rendered by main.jsx
- * @depends src/storage.js, src/audio.js, src/sm2.js, src/exercises.js, src/data/topics.js, src/data/vocab-data.json
+ * @depends src/storage.js, src/audio.js, src/sm2.js, src/exercises.js, src/data/topics.js, src/data/vocab-data.json, src/data/primitives.json, src/engine/templates.js
  * @connects Loads persisted state on mount via storage.js; drives the whole UX.
  */
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -13,6 +13,8 @@ import { speak } from "./audio";
 import { sm2, isDue } from "./sm2";
 import { TOPICS } from "./data/topics";
 import vocabData from "./data/vocab-data.json";
+import primData from "./data/primitives.json";
+import { enumerate as enumerateSentences } from "./engine/templates";
 import { generateExercise, genWordMatch, shuffle, pick } from "./exercises";
 
 const V = {
@@ -48,6 +50,7 @@ export default function App() {
   const [srData, setSR] = useState({});
   const [learned, setLearned] = useState([]);
   const [learnedSentences, setLearnedSentences] = useState({});
+  const [learnedPrimitives, setLearnedPrimitives] = useState([]);
   const [ready, setReady] = useState(false);
 
   const [curT, setCurT] = useState(null);
@@ -74,6 +77,7 @@ export default function App() {
     setSR(storageGet(KEYS.SR_DATA, {}));
     setLearned(storageGet(KEYS.LEARNED_WORDS, []));
     setLearnedSentences(storageGet(KEYS.LEARNED_SENTENCES, {}));
+    setLearnedPrimitives(storageGet(KEYS.LEARNED_PRIMITIVES, []));
     const ld = storageGet(KEYS.LAST_DAY, null);
     const today = new Date().toDateString();
     if (ld && ld !== today && ld !== new Date(Date.now()-864e5).toDateString()) {
@@ -83,14 +87,54 @@ export default function App() {
   }, []);
 
   const saveAll = useCallback((u) => {
-    const m = {xp:KEYS.XP,streak:KEYS.STREAK,lastDay:KEYS.LAST_DAY,tLessons:KEYS.TOPIC_LESSONS,srData:KEYS.SR_DATA,learned:KEYS.LEARNED_WORDS,learnedSentences:KEYS.LEARNED_SENTENCES};
+    const m = {xp:KEYS.XP,streak:KEYS.STREAK,lastDay:KEYS.LAST_DAY,tLessons:KEYS.TOPIC_LESSONS,srData:KEYS.SR_DATA,learned:KEYS.LEARNED_WORDS,learnedSentences:KEYS.LEARNED_SENTENCES,learnedPrimitives:KEYS.LEARNED_PRIMITIVES};
     for (const [k,v] of Object.entries(u)) if(m[k]) storageSet(m[k],v);
   },[]);
 
   const getVocab = (topicId) => vocabData[topicId] || null;
+  const isPrimTopic = (topicId) => !!primData.topics[topicId];
+
+  const buildPrimPool = useCallback((topicId, pids) => {
+    const topic = primData.topics[topicId]; if(!topic) return {words:[],sentences:[]};
+    const all = primData.primitives;
+    const words = pids.filter(id=>all[id]).map(id=>({
+      tamil: all[id].tamil, transliteration: all[id].transliteration, english: all[id].english,
+      topicId, _primId: id,
+    }));
+    const sentences = enumerateSentences(all, new Set(pids), topic).map(s=>({
+      tamil: s.tamil, transliteration: "", english: s.english,
+      tokens: s.tokens, primIds: s.primIds, templateId: s.templateId,
+    }));
+    return {words, sentences};
+  },[]);
+
+  const nextPrimBatch = useCallback((topicId, pids) => {
+    const topic = primData.topics[topicId]; if(!topic) return [];
+    const all = primData.primitives;
+    const known = new Set(pids);
+    const batch = [];
+    const take = (id) => { if(id && !known.has(id)){ batch.push(id); known.add(id); } };
+    take((topic.groups.pronouns||[]).find(id=>!known.has(id)));
+    take((topic.groups.verbs||[]).find(id=>!known.has(id)));
+    take((topic.groups.destinations||[]).find(id=>!known.has(id)));
+    if(batch.length<3){
+      const ordered = [...(topic.groups.pronouns||[]),...(topic.groups.verbs||[]),...(topic.groups.destinations||[])];
+      for(const id of ordered){ if(batch.length>=3) break; if(!known.has(id)){ batch.push(id); known.add(id); } }
+    }
+    return batch.map(id=>({...all[id], _primId:id}));
+  },[]);
 
   const startTopic = useCallback((topicId) => {
     const t = TOPICS.find(x=>x.id===topicId); setCurT(t);
+    setStep(0); setHearts(5); setEarnXP(0); setDone(false); setSel(null); setBuilt([]); setRem([]);
+    if(isPrimTopic(topicId)){
+      const batch = nextPrimBatch(topicId, learnedPrimitives);
+      if(batch.length>0){ setIntroBatch(batch); setCardsMode("primitive-intro"); setCi(0); setScr("cards"); return; }
+      const pool = buildPrimPool(topicId, learnedPrimitives);
+      const d = Math.min(Math.floor((tLessons[topicId]||0)/3),2);
+      const e = generateExercise(pool.words, pool.sentences, d);
+      setEx(e); if(e.type==="build") setRem([...e.scrambled]); setScr("lesson"); return;
+    }
     const v = getVocab(topicId);
     if(!v||!v.words?.length) return;
     setStep(0); setHearts(5); setEarnXP(0); setDone(false); setSel(null); setBuilt([]); setRem([]);
@@ -126,12 +170,30 @@ export default function App() {
 
   const reviewCards = useCallback((topicId)=>{
     const t=TOPICS.find(x=>x.id===topicId);if(!t)return;
+    if(isPrimTopic(topicId)){
+      const all = primData.primitives;
+      const cards = learnedPrimitives.filter(id=>all[id]).map(id=>({...all[id],_primId:id}));
+      if(cards.length===0)return;
+      setCurT(t);setIntroBatch(cards);setCardsMode("review");setCi(0);setScr("cards");return;
+    }
     const learnedForTopic = learned.filter(w=>w.topicId===topicId);
     if(learnedForTopic.length===0)return;
     setCurT(t);setIntroBatch(learnedForTopic);setCardsMode("review");setCi(0);setScr("cards");
-  },[learned]);
+  },[learned,learnedPrimitives]);
 
   const startFromCards = useCallback(()=>{
+    if(isPrimTopic(curT.id)){
+      let npl = learnedPrimitives;
+      if(cardsMode==="primitive-intro"){
+        const add = introBatch.map(p=>p._primId).filter(id=>id && !npl.includes(id));
+        npl = [...npl, ...add];
+        setLearnedPrimitives(npl); saveAll({learnedPrimitives:npl});
+      }
+      const pool = buildPrimPool(curT.id, npl);
+      const d = Math.min(Math.floor((tLessons[curT.id]||0)/3),2);
+      const e = generateExercise(pool.words, pool.sentences, d);
+      setEx(e); if(e.type==="build") setRem([...e.scrambled]); setStep(0); setScr("lesson"); return;
+    }
     const v=getVocab(curT.id);
     let nw=learned;
     let nls=learnedSentences;
@@ -151,7 +213,7 @@ export default function App() {
     const d = Math.min(Math.floor((tLessons[curT.id]||0)/3),2);
     const e=generateExercise(learnedForTopic,allowedSentences,d);
     setEx(e);if(e.type==="build")setRem([...e.scrambled]);setStep(0);setScr("lesson");
-  },[curT,learned,learnedSentences,introBatch,cardsMode,tLessons,saveAll]);
+  },[curT,learned,learnedSentences,learnedPrimitives,introBatch,cardsMode,tLessons,saveAll,buildPrimPool]);
 
   const handlePick = (o)=>{
     if(done)return;setSel(o);setDone(true);setOk(o.correct);
@@ -168,17 +230,22 @@ export default function App() {
       const nx=xp+earnXP, ns=lastDay===today?streak:streak+1;
       const nl={...tLessons,[curT.id]:(tLessons[curT.id]||0)+1};
       setXP(nx);setStreak(ns);setLastDay(today);setTLessons(nl);
-      saveAll({xp:nx,streak:ns,lastDay:today,tLessons:nl,srData:srData,learned});
+      saveAll({xp:nx,streak:ns,lastDay:today,tLessons:nl,srData:srData,learned,learnedPrimitives});
       setScr("result");return;
     }
     setStep(s=>s+1);setDone(false);setSel(null);setBuilt([]);setRem([]);
+    const d=Math.min(Math.floor((tLessons[curT.id]||0)/3),2);
+    if(isPrimTopic(curT.id)){
+      const pool = buildPrimPool(curT.id, learnedPrimitives);
+      const e = generateExercise(pool.words, pool.sentences, d);
+      setEx(e); if(e.type==="build") setRem([...e.scrambled]); return;
+    }
     const v=getVocab(curT.id);
     const learnedForTopic = learned.filter(w=>w.topicId===curT.id);
     const learnedSentIdx = learnedSentences[curT.id] || [];
     const allowedSentences = learnedSentIdx.map(i=>(v.sentences||[])[i]).filter(Boolean);
-    const d=Math.min(Math.floor((tLessons[curT.id]||0)/3),2);
     const e=generateExercise(learnedForTopic,allowedSentences,d);setEx(e);if(e.type==="build")setRem([...e.scrambled]);
-  },[hearts,step,xp,earnXP,streak,lastDay,tLessons,curT,srData,learned,learnedSentences,saveAll]);
+  },[hearts,step,xp,earnXP,streak,lastDay,tLessons,curT,srData,learned,learnedSentences,learnedPrimitives,buildPrimPool,saveAll]);
 
   const startReview = useCallback(()=>{
     const due=learned.filter(w=>isDue(srData[w.tamil]));
@@ -225,9 +292,13 @@ export default function App() {
           <div style={{padding:"8px 20px"}}>
             {learned.length>=4&&<button onClick={startReview} style={{...btnS("linear-gradient(135deg,#6D28D9,#A78BFA)"),marginBottom:14}}>🔄 Review Due Words</button>}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-              {TOPICS.filter(t=>vocabData[t.id]).map(t=>{
+              {TOPICS.filter(t=>vocabData[t.id]||primData.topics[t.id]).map(t=>{
                 const ls=tLessons[t.id]||0,mast=ls>=10;
-                const learnedCt = learned.filter(w=>w.topicId===t.id).length;
+                const primTopic = primData.topics[t.id];
+                const primIds = primTopic ? [...(primTopic.groups.pronouns||[]),...(primTopic.groups.verbs||[]),...(primTopic.groups.destinations||[])] : [];
+                const learnedCt = primTopic
+                  ? learnedPrimitives.filter(id=>primIds.includes(id)).length
+                  : learned.filter(w=>w.topicId===t.id).length;
                 return(<div key={t.id} onClick={()=>startTopic(t.id)} style={{background:`linear-gradient(145deg,${t.color}15,${t.color}08)`,border:`1.5px solid ${t.color}${mast?"66":"33"}`,borderRadius:20,padding:"18px 12px",textAlign:"center",cursor:"pointer",transition:"all 0.2s",position:"relative"}}>
                   {learnedCt>0&&<button onClick={e=>{e.stopPropagation();reviewCards(t.id);}} title="Review cards" style={{position:"absolute",top:6,left:8,background:"rgba(255,255,255,0.08)",border:"none",borderRadius:8,padding:"3px 7px",fontSize:11,color:V.dim,cursor:"pointer",fontFamily:V.fn}}>📖 {learnedCt}</button>}
                   {mast&&<div style={{position:"absolute",top:6,right:8,fontSize:13}}>👑</div>}
@@ -255,14 +326,18 @@ export default function App() {
     );
   }
 
-  // ═══ CARDS (word intro / review / sentence intro) ═══════════════
+  // ═══ CARDS (word intro / review / sentence intro / primitive intro) ═══════════════
   if(scr==="cards"){
     const intro=introBatch;if(!intro.length){setScr("home");return null;}
     const w=intro[ci];const isReview=cardsMode==="review";
     const isSent=cardsMode==="sentence-intro";
+    const isPrim=cardsMode==="primitive-intro"||(isReview&&w._primId);
     const isLast=ci+1>=intro.length;
-    const label=isReview?"Review":isSent?"New Sentences":"New Words";
-    const nextLabel=!isLast?(isSent?"Next Sentence →":"Next Word →"):(isReview?"Done ✓":"Start Practice! 🎯");
+    const label=isReview?"Review":isSent?"New Sentences":isPrim?"New Building Blocks":"New Words";
+    const nextLabel=!isLast?(isSent?"Next Sentence →":isPrim?"Next →":"Next Word →"):(isReview?"Done ✓":"Start Practice! 🎯");
+    const primExtra = isPrim && w.pos==="verb" ? (w.hint || `e.g. ${w.audioText||""}`)
+      : isPrim && w.pos==="noun" ? `→ ${w.dative||""}${w.toGloss?` (${w.toGloss})`:""}`
+      : null;
     return(
       <div style={{minHeight:"100vh",background:V.bg,fontFamily:V.fn,color:V.txt}}>
         <div style={{padding:"20px 20px 10px"}}>
@@ -280,6 +355,7 @@ export default function App() {
           <div style={{width:50,height:3,background:curT.color,margin:"18px auto",borderRadius:2,opacity:0.5}}/>
           <div style={{fontSize:isSent?16:20,fontWeight:600,color:"#ddd",lineHeight:1.4}}>{w.english}</div>
           {isSent&&<div style={{marginTop:14,fontSize:11,color:V.dim,letterSpacing:1,textTransform:"uppercase"}}>How it sounds in real conversation</div>}
+          {primExtra&&<div style={{marginTop:14,fontSize:14,color:V.dim,fontFamily:V.ft}}>{primExtra}</div>}
         </div>
         <div style={{padding:"0 20px"}}>
           <button onClick={()=>{speak(w.tamil,curT.id);if(!isLast)setCi(ci+1);else if(isReview)setScr("home");else startFromCards();}} style={btnS(`linear-gradient(135deg,${curT.color},${curT.color}bb)`)}>

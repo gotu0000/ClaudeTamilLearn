@@ -3,7 +3,7 @@
  * @module Storage
  * @description localStorage abstraction. Namespaces all keys under `tamillearn:` and handles JSON (de)serialization with silent error swallowing.
  * @exports
- *   - KEYS: constant map of namespaced storage keys (XP, STREAK, LAST_DAY, TOPIC_LESSONS, SR_DATA, LEARNED_WORDS, LEARNED_SENTENCES)
+ *   - KEYS: constant map of namespaced storage keys (XP, STREAK, LAST_DAY, TOPIC_LESSONS, SR_DATA, LEARNED_WORDS, LEARNED_SENTENCES, LEARNED_PRIMITIVES)
  *   - storageGet(key, fallback): read + JSON.parse + fall back on miss/error
  *   - storageSet(key, value): JSON.stringify + write (errors logged, not thrown)
  *   - storageClear(): remove every `tamillearn:` key
@@ -42,4 +42,5 @@ export const KEYS = {
   SR_DATA: "srData",
   LEARNED_WORDS: "learnedWords",
   LEARNED_SENTENCES: "learnedSentences",
+  LEARNED_PRIMITIVES: "learnedPrimitives",
 };

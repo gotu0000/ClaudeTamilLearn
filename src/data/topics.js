@@ -8,6 +8,8 @@
  * @connects Rendered on the home grid in App.jsx; keys match vocab-data.json and determine the order of topics.
  */
 export const TOPICS = [
+  { id: "pronouns", title: "Pronouns", emoji: "👤", color: "#8B5CF6" },
+  { id: "qwords", title: "Question words", emoji: "❓", color: "#EAB308" },
   { id: "verbs", title: "Talk about actions", emoji: "🏃", color: "#DC2626" },
   { id: "greetings", title: "Greet someone", emoji: "🙏", color: "#D94F3B" },
   { id: "emotions", title: "Share how you feel", emoji: "💛", color: "#D9A13B" },

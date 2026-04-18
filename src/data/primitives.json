@@ -34,9 +34,30 @@
     "n-temple": { "pos":"noun", "tamil":"கோயில்",  "transliteration":"kōyil",    "english":"temple",  "dative":"கோயிலுக்கு",   "toGloss":"to the temple",  "audioText":"கோயில்" },
     "n-shop":   { "pos":"noun", "tamil":"கடை",      "transliteration":"kaḍai",    "english":"shop",    "dative":"கடைக்கு",       "toGloss":"to the shop",    "audioText":"கடை" },
     "n-cinema": { "pos":"noun", "tamil":"சினிமா",  "transliteration":"sinimā",   "english":"cinema",  "dative":"சினிமாவுக்கு",  "toGloss":"to the cinema",  "audioText":"சினிமா" },
-    "n-school": { "pos":"noun", "tamil":"பள்ளி",    "transliteration":"paḷḷi",    "english":"school",  "dative":"பள்ளிக்கு",     "toGloss":"to school",      "audioText":"பள்ளி" }
+    "n-school": { "pos":"noun", "tamil":"பள்ளி",    "transliteration":"paḷḷi",    "english":"school",  "dative":"பள்ளிக்கு",     "toGloss":"to school",      "audioText":"பள்ளி" },
+
+    "qw-what":  { "pos":"qword", "tamil":"என்ன",    "transliteration":"enna",    "english":"what",  "audioText":"என்ன" },
+    "qw-who":   { "pos":"qword", "tamil":"யார்",    "transliteration":"yaar",    "english":"who",   "audioText":"யார்" },
+    "qw-where": { "pos":"qword", "tamil":"எங்க",    "transliteration":"enga",    "english":"where", "audioText":"எங்க" },
+    "qw-when":  { "pos":"qword", "tamil":"எப்போ",   "transliteration":"eppo",    "english":"when",  "audioText":"எப்போ" },
+    "qw-why":   { "pos":"qword", "tamil":"ஏன்",     "transliteration":"ēn",      "english":"why",   "audioText":"ஏன்" },
+    "qw-how":   { "pos":"qword", "tamil":"எப்படி",  "transliteration":"eppadi",  "english":"how",   "audioText":"எப்படி" }
   },
   "topics": {
+    "pronouns": {
+      "title": "Pronouns",
+      "groups": {
+        "pronouns": ["pron-1s","pron-2s","pron-3sm","pron-3sf","pron-1pl","pron-2pl"]
+      },
+      "templates": []
+    },
+    "qwords": {
+      "title": "Question words",
+      "groups": {
+        "qwords": ["qw-what","qw-who","qw-where","qw-when","qw-why","qw-how"]
+      },
+      "templates": []
+    },
     "travel": {
       "title": "Get around",
       "groups": {

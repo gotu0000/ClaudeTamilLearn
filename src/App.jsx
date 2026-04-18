@@ -1,14 +1,14 @@
 /**
  * @file App.jsx
  * @module App
- * @description Root React component. Owns all UI, state (xp, streak, lessons, SR, learned words, learned sentences, learned primitives), and lesson orchestration. Five screens: home, cards (intro / review / sentence-intro / primitive-intro), lesson, result, dict. Two content backends run side by side: legacy vocab-data.json drives the original 19 topics with word-and-sentence intros; the new primitive-backed grammar engine drives the pilot topic (travel / "Get around"), showing primitives on intro cards and composing exercise sentences at runtime via engine/templates.js.
+ * @description Root React component. Owns all UI, state (xp, streak, lessons, SR, learned words, learned sentences, learned primitives), and lesson orchestration. Five screens: home, cards (intro / review / sentence-intro / primitive-intro), lesson, result, dict. Two content backends run side by side: legacy vocab-data.json drives the original 19 themed topics with word-and-sentence intros; the primitive-backed grammar engine drives foundation decks (`pronouns`, `qwords`) and composed topics (`travel`), showing primitives on intro cards and composing exercise sentences at runtime via engine/templates.js. Dictionary view exposes a Reset button that clears every `tamillearn:` key via storage.storageClear().
  * @exports
  *   - default App(): the root component rendered by main.jsx
  * @depends src/storage.js, src/audio.js, src/sm2.js, src/exercises.js, src/data/topics.js, src/data/vocab-data.json, src/data/primitives.json, src/engine/templates.js
  * @connects Loads persisted state on mount via storage.js; drives the whole UX.
  */
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { storageGet, storageSet, KEYS } from "./storage";
+import { storageGet, storageSet, storageClear, KEYS } from "./storage";
 import { speak } from "./audio";
 import { sm2, isDue } from "./sm2";
 import { TOPICS } from "./data/topics";
@@ -91,6 +91,16 @@ export default function App() {
     for (const [k,v] of Object.entries(u)) if(m[k]) storageSet(m[k],v);
   },[]);
 
+  const resetProgress = useCallback(() => {
+    if (!window.confirm("Reset all progress? This cannot be undone.")) return;
+    storageClear();
+    setXP(0); setStreak(0); setLastDay(null);
+    setTLessons({}); setSR({});
+    setLearned([]); setLearnedSentences({}); setLearnedPrimitives([]);
+    setDSearch(""); setDTopic("all");
+    setScr("home");
+  },[]);
+
   const getVocab = (topicId) => vocabData[topicId] || null;
   const isPrimTopic = (topicId) => !!primData.topics[topicId];
 
@@ -117,13 +127,20 @@ export default function App() {
     const all = primData.primitives;
     const known = new Set(pids);
     const batch = [];
-    const take = (id) => { if(id && !known.has(id)){ batch.push(id); known.add(id); } };
-    take((topic.groups.pronouns||[]).find(id=>!known.has(id)));
-    take((topic.groups.verbs||[]).find(id=>!known.has(id)));
-    take((topic.groups.destinations||[]).find(id=>!known.has(id)));
-    if(batch.length<3){
-      const ordered = [...(topic.groups.pronouns||[]),...(topic.groups.verbs||[]),...(topic.groups.destinations||[])];
-      for(const id of ordered){ if(batch.length>=3) break; if(!known.has(id)){ batch.push(id); known.add(id); } }
+    const groups = topic.groups || {};
+    // One from each group in declaration order — gives a mixed first batch
+    // for multi-group topics (e.g. pron+verb+dest for travel) and a single-
+    // group slice for foundation decks (pronouns, qwords).
+    for (const key of Object.keys(groups)) {
+      if (batch.length >= 3) break;
+      const id = (groups[key]||[]).find(id=>!known.has(id));
+      if (id) { batch.push(id); known.add(id); }
+    }
+    if (batch.length < 3) {
+      for (const id of Object.values(groups).flat()) {
+        if (batch.length >= 3) break;
+        if (!known.has(id)) { batch.push(id); known.add(id); }
+      }
     }
     return batch.map(id=>({...all[id], _primId:id}));
   },[]);
@@ -299,7 +316,7 @@ export default function App() {
               {TOPICS.filter(t=>vocabData[t.id]||primData.topics[t.id]).map(t=>{
                 const ls=tLessons[t.id]||0,mast=ls>=10;
                 const primTopic = primData.topics[t.id];
-                const primIds = primTopic ? [...(primTopic.groups.pronouns||[]),...(primTopic.groups.verbs||[]),...(primTopic.groups.destinations||[])] : [];
+                const primIds = primTopic ? Object.values(primTopic.groups).flat() : [];
                 const learnedCt = primTopic
                   ? learnedPrimitives.filter(id=>primIds.includes(id)).length
                   : learned.filter(w=>w.topicId===t.id).length;
@@ -316,7 +333,10 @@ export default function App() {
           </div>
         ):(
           <div style={{padding:"10px 20px"}}>
-            <input type="text" value={dSearch} onChange={e=>setDSearch(e.target.value)} placeholder="Search words..." style={{width:"100%",padding:"11px 14px",background:V.card,border:`1.5px solid ${V.bdr}`,borderRadius:12,color:V.txt,fontSize:14,fontFamily:V.fn,marginBottom:10,boxSizing:"border-box",outline:"none"}}/>
+            <div style={{display:"flex",gap:8,marginBottom:10}}>
+              <input type="text" value={dSearch} onChange={e=>setDSearch(e.target.value)} placeholder="Search words..." style={{flex:1,padding:"11px 14px",background:V.card,border:`1.5px solid ${V.bdr}`,borderRadius:12,color:V.txt,fontSize:14,fontFamily:V.fn,boxSizing:"border-box",outline:"none"}}/>
+              <button onClick={resetProgress} title="Reset all progress" style={{padding:"11px 14px",background:"transparent",border:`1.5px solid ${V.red}55`,borderRadius:12,color:V.red,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:V.fn,whiteSpace:"nowrap"}}>↺ Reset</button>
+            </div>
             <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:12}}>
               <button onClick={()=>setDTopic("all")} style={{padding:"5px 10px",borderRadius:8,border:`1px solid ${dTopic==="all"?V.acc:V.bdr}`,background:dTopic==="all"?V.acc+"22":"transparent",color:dTopic==="all"?V.acc:V.dim,fontSize:11,cursor:"pointer",fontFamily:V.fn}}>All</button>
               {TOPICS.filter(t=>vocabData[t.id]).map(t=>(<button key={t.id} onClick={()=>setDTopic(t.id)} style={{padding:"5px 10px",borderRadius:8,border:`1px solid ${dTopic===t.id?t.color:V.bdr}`,background:dTopic===t.id?t.color+"22":"transparent",color:dTopic===t.id?t.color:V.dim,fontSize:11,cursor:"pointer",fontFamily:V.fn}}>{t.emoji}</button>))}

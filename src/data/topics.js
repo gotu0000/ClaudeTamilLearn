@@ -9,7 +9,7 @@
  */
 export const TOPICS = [
   { id: "verbs", title: "Common Verbs", emoji: "🏃", color: "#DC2626" },
-  { id: "greetings", title: "Greetings & Basics", emoji: "🙏", color: "#D94F3B" },
+  { id: "greetings", title: "Greet someone", emoji: "🙏", color: "#D94F3B" },
   { id: "emotions", title: "Emotions", emoji: "💛", color: "#D9A13B" },
   { id: "questions", title: "Questions & Connectors", emoji: "❓", color: "#7C3AED" },
   { id: "numbers", title: "Numbers & Time", emoji: "🔢", color: "#8B5CF6" },

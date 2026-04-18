@@ -39,7 +39,7 @@ TOPICS = [
 ]
 
 def generate(client, title, count, desc):
-    prompt = f"""Generate {count} Tamil vocabulary words and 10 sentences for "{title}".
+    prompt = f"""Generate {count} Tamil vocabulary words and 15 sentences for "{title}".
 
 Topic details: {desc}
 
@@ -47,13 +47,18 @@ Return ONLY valid JSON. No markdown. No explanation.
 {{"words":[{{"tamil":"...","transliteration":"...","english":"..."}}],"sentences":[{{"tamil":"...","transliteration":"...","english":"..."}}]}}
 
 Rules:
-- Exactly {count} words, exactly 10 sentences
+- Exactly {count} words, exactly 15 sentences
 - Use SPOKEN/COLLOQUIAL Tamil (movie dialogue style), not literary
 - Tamil script must be accurate
 - Transliteration: intuitive romanization
-- English: 1-3 words max
+- English for words: 1-3 words max
 - No duplicate words
-- Sentences should use words from the list"""
+
+Sentence rules (important):
+- Each sentence is something one person would actually SAY to a friend or family member in a real situation — ordering food, asking directions, reacting to news, joking, complaining, agreeing, refusing. NOT textbook examples.
+- Movie-register colloquial Tamil — the way friends talk, not how books teach.
+- Keep each sentence short (3-8 Tamil words). One sentence each, no multi-turn dialogue.
+- English translation should capture the natural meaning, not a word-for-word literal."""
 
     resp = client.messages.create(
         model="claude-sonnet-4-20250514",

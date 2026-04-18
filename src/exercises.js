@@ -1,7 +1,7 @@
 /**
  * @file exercises.js
  * @module Exercises
- * @description Pure exercise generators. Four types: word-match, listen, fill-blank, sentence-build. Difficulty-gated in generateExercise: 0=match+listen, 1=+fill, 2=+build.
+ * @description Pure exercise generators. Four types: word-match, listen, fill-blank, sentence-build. Difficulty-gated in generateExercise: 0=match+listen, 1=+fill, 2=+build. The `sentences` argument is the learner's introduced-sentence slice (not the full topic pool); fill/build only fire when this slice is non-empty.
  * @exports
  *   - shuffle(arr): Fisher-Yates copy
  *   - pick(arr, n): shuffled slice of n

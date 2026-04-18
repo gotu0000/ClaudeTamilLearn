@@ -6,13 +6,13 @@ _Auto-generated from JSDoc headers in `src/`. Run `python3 scripts/gen_file_map.
 
 **Module:** App
 
-**Description:** Root React component. Owns all UI, state (xp, streak, lessons, SR, learned words, learned sentences), and lesson orchestration. Five screens: home, cards (intro / review / sentence-intro), lesson, result, dict. Words and sentences are both first-class learnables: startTopic interleaves word-intro batches (BATCH_SIZE words) and sentence-intro batches (SENTENCE_BATCH_SIZE sentences) based on a debt rule so sentences land shortly after the first word batch instead of only after all words are exhausted.
+**Description:** Root React component. Owns all UI, state (xp, streak, lessons, SR, learned words, learned sentences, learned primitives), and lesson orchestration. Five screens: home, cards (intro / review / sentence-intro / primitive-intro), lesson, result, dict. Two content backends run side by side: legacy vocab-data.json drives the original 19 topics with word-and-sentence intros; the new primitive-backed grammar engine drives the pilot topic (travel / "Get around"), showing primitives on intro cards and composing exercise sentences at runtime via engine/templates.js.
 
 **Exports:**
 
 - default App(): the root component rendered by main.jsx
 
-**Depends on:** src/storage.js, src/audio.js, src/sm2.js, src/exercises.js, src/data/topics.js, src/data/vocab-data.json
+**Depends on:** src/storage.js, src/audio.js, src/sm2.js, src/exercises.js, src/data/topics.js, src/data/vocab-data.json, src/data/primitives.json, src/engine/templates.js
 
 **Connects:** Loads persisted state on mount via storage.js; drives the whole UX.
 
@@ -44,6 +44,37 @@ _Auto-generated from JSDoc headers in `src/`. Run `python3 scripts/gen_file_map.
 **Depends on:** (none)
 
 **Connects:** Rendered on the home grid in App.jsx; keys match vocab-data.json and determine the order of topics.
+
+## `src/engine/morphology.js`
+
+**Module:** Morphology
+
+**Description:** Small helpers for Tamil-sentence assembly. Inflections themselves are pre-computed in primitives.json; this file only holds the English-side glue needed by templates (auxiliary verb selection, capitalization) plus the question-particle rule.
+
+**Exports:**
+
+- auxFor(pronoun): "Am" / "Are" / "Is" — English auxiliary matching the subject
+- capFirst(str): capitalize the first character
+- addQuestionParticle(tamilToken): append the -ஆ particle to the final verb token
+
+**Depends on:** (none)
+
+**Connects:** Called from src/engine/templates.js to build per-template output.
+
+## `src/engine/templates.js`
+
+**Module:** Templates
+
+**Description:** Grammar templates for client-side Tamil sentence composition. Each template declares which primitive POS classes it needs and a build() function that returns {tokens[], english}. tokens[] carries per-word {t, id} so downstream exercises can map a Tamil token back to the primitive that produced it (needed by fill-blank). enumerate() expands a set of introduced primitives through all enabled templates into a deduped list of composable sentences.
+
+**Exports:**
+
+- TEMPLATES: map of templateId → {needs, build}
+- enumerate(primitives, learnedIds, topic): [{tamil, english, tokens, templateId, primIds}]
+
+**Depends on:** src/engine/morphology.js
+
+**Connects:** Called from App.jsx to build the sentence pool fed into exercise generators for primitive-backed topics.
 
 ## `src/exercises.js`
 
@@ -100,7 +131,7 @@ _Auto-generated from JSDoc headers in `src/`. Run `python3 scripts/gen_file_map.
 
 **Exports:**
 
-- KEYS: constant map of namespaced storage keys (XP, STREAK, LAST_DAY, TOPIC_LESSONS, SR_DATA, LEARNED_WORDS, LEARNED_SENTENCES)
+- KEYS: constant map of namespaced storage keys (XP, STREAK, LAST_DAY, TOPIC_LESSONS, SR_DATA, LEARNED_WORDS, LEARNED_SENTENCES, LEARNED_PRIMITIVES)
 - storageGet(key, fallback): read + JSON.parse + fall back on miss/error
 - storageSet(key, value): JSON.stringify + write (errors logged, not thrown)
 - storageClear(): remove every `tamillearn:` key

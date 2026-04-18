@@ -436,6 +436,10 @@ export default function App() {
             {!ok&&<div style={{marginTop:5,fontSize:13,color:"#bbb"}}>{ex.type==="build"?<>Correct: <span style={{fontFamily:V.ft}}>{ex.correctOrder.join(" ")}</span></>:<>Answer: {ex.answer}</>}</div>}
             {ok&&<div style={{fontSize:11,color:V.dim,marginTop:3}}>+{ex.xp} XP</div>}
           </div>
+          {ex.grammarTip&&<div style={{padding:"10px 14px",borderRadius:V.rad,marginBottom:8,background:"rgba(255,209,102,0.08)",border:`1.5px solid ${V.gold}33`,fontSize:13,color:"#e0dcc0"}}>
+            <span style={{fontWeight:700,color:V.gold,marginRight:6}}>💡 Rule:</span>
+            <span style={{fontFamily:V.ft}}>{ex.grammarTip}</span>
+          </div>}
           <button onClick={nextStep} style={btnS(ok?V.grn:V.red)}>{hearts<=0?"End Lesson":step+1>=LESSON_LEN?"Finish! 🏆":"Continue →"}</button>
         </div>)}
         <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}@keyframes slideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}`}</style>

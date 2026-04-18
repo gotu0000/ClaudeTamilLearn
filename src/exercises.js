@@ -7,7 +7,7 @@
  *   - pick(arr, n): shuffled slice of n
  *   - genWordMatch(words): {type:"word-match", options:[{label,correct}], xp:10}
  *   - genListen(words, sentences): {type:"listen", options, xp:15}
- *   - genFillBlank(words, sentences): {type:"fill", options, xp:20}; falls back to word-match on tiny sentences or empty sentence pool
+ *   - genFillBlank(words, sentences): {type:"fill", options, xp:20, blankTamil}; falls back to word-match on tiny sentences or empty sentence pool. `blankTamil` is the Tamil token (or null) the UI should highlight — the word whose English gloss is being blanked.
  *   - genSentenceBuild(sentences): {type:"build", correctOrder, scrambled, xp:25}; returns null if insufficient tokens or empty pool
  *   - generateExercise(words, sentences, difficulty): picks a suitable generator based on difficulty and sentence availability
  * @depends (none)
@@ -98,9 +98,11 @@ export function genFillBlank(words, sentences) {
           .map((w) => (w.pos === "verb" ? w.englishIng : w.english))
           .filter((x) => x && x.toLowerCase() !== blank.toLowerCase());
         const dist = pick(sameSposOthers, 3);
+        const tokMatch = s.tokens?.find((t) => t.id === target._primId);
         return {
           type: "fill", tamil: s.tamil, transliteration: s.transliteration || "",
           display, answer: blank, targetWord: s,
+          blankTamil: tokMatch ? tokMatch.t : null,
           options: shuffle([blank, ...dist].slice(0, 4).map((o) => ({ label: o, correct: o === blank }))),
           xp: 20,
         };
@@ -123,9 +125,21 @@ export function genFillBlank(words, sentences) {
       .filter((w) => w && !isStop(w) && w.toLowerCase() !== blank.toLowerCase()),
     3
   );
+  // Reverse-lookup the Tamil token matching the blanked English word, so the UI
+  // can highlight which Tamil word the learner is being asked to identify.
+  let blankTamil = null;
+  const wordMatch = words.find((w) => {
+    const head = (w.english || "").toLowerCase().split(" / ")[0].split(" ")[0];
+    return head === blank.toLowerCase();
+  });
+  if (wordMatch && wordMatch.tamil) {
+    const toks = s.tamil.split(" ");
+    const hit = toks.find((t) => t === wordMatch.tamil || t.includes(wordMatch.tamil));
+    blankTamil = hit || wordMatch.tamil;
+  }
   return {
     type: "fill", tamil: s.tamil, transliteration: s.transliteration,
-    display, answer: blank, targetWord: s,
+    display, answer: blank, targetWord: s, blankTamil,
     options: shuffle([blank, ...dist].slice(0, 4).map((o) => ({ label: o, correct: o === blank }))),
     xp: 20,
   };

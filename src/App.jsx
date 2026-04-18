@@ -391,12 +391,22 @@ export default function App() {
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:10}}>{ex.options.map((o,i)=>(<button key={i} style={optS(sel===o,o.correct,done)} onClick={()=>handlePick(o)}><div style={{fontSize:16,fontWeight:600,color:V.txt}}>{o.label}</div></button>))}</div>
       </>);
-      if(ex.type==="fill")return(<>
+      if(ex.type==="fill"){
+        const hl = ex.blankTamil;
+        const toks = ex.tamil.split(" ");
+        const matchIdx = hl ? toks.findIndex(t => t === hl || t.includes(hl)) : -1;
+        const hlStyle = {color:V.acc, background:"rgba(255,107,53,0.14)", padding:"1px 8px", borderRadius:6, boxShadow:"0 0 0 1px rgba(255,107,53,0.3) inset"};
+        return(<>
         <div style={{fontSize:11,color:V.dim,fontWeight:600,textTransform:"uppercase",letterSpacing:1.5,marginBottom:10}}>Fill in the blank</div>
-        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:4}}><Spk text={ex.tamil} topicId={curT?.id}/><div><div style={{fontFamily:V.ft,fontSize:20,fontWeight:700,color:"#fff"}}>{ex.tamil}</div><div style={{fontSize:12,color:V.dim,fontStyle:"italic",marginTop:1}}>{ex.transliteration}</div></div></div>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:4}}><Spk text={ex.tamil} topicId={curT?.id}/><div>
+          <div style={{fontFamily:V.ft,fontSize:20,fontWeight:700,color:"#fff"}}>
+            {matchIdx>=0 ? toks.map((t,i)=>(<span key={i}>{i>0?" ":""}<span style={i===matchIdx?hlStyle:undefined}>{t}</span></span>)) : ex.tamil}
+          </div>
+          <div style={{fontSize:12,color:V.dim,fontStyle:"italic",marginTop:1}}>{ex.transliteration}</div>
+        </div></div>
         <div style={{background:V.card,borderRadius:12,padding:"12px 16px",margin:"10px 0 20px",fontSize:16,color:"#ccc",fontWeight:500,border:`1px solid ${V.bdr}`}}>{ex.display}</div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>{ex.options.map((o,i)=>(<button key={i} style={{...optS(sel===o,o.correct,done),textAlign:"center"}} onClick={()=>handlePick(o)}><div style={{fontSize:15,fontWeight:600,color:V.txt}}>{o.label}</div></button>))}</div>
-      </>);
+      </>);}
       if(ex.type==="build")return(<>
         <div style={{fontSize:11,color:V.dim,fontWeight:600,textTransform:"uppercase",letterSpacing:1.5,marginBottom:10}}>Build the Tamil sentence</div>
         <div style={{fontSize:17,fontWeight:600,color:"#e0e0e8",marginBottom:3}}>{ex.english}</div>

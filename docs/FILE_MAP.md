@@ -88,7 +88,7 @@ _Auto-generated from JSDoc headers in `src/`. Run `python3 scripts/gen_file_map.
 - pick(arr, n): shuffled slice of n
 - genWordMatch(words): {type:"word-match", options:[{label,correct}], xp:10}
 - genListen(words, sentences): {type:"listen", options, xp:15}
-- genFillBlank(words, sentences): {type:"fill", options, xp:20}; falls back to word-match on tiny sentences or empty sentence pool
+- genFillBlank(words, sentences): {type:"fill", options, xp:20, blankTamil}; falls back to word-match on tiny sentences or empty sentence pool. `blankTamil` is the Tamil token (or null) the UI should highlight — the word whose English gloss is being blanked.
 - genSentenceBuild(sentences): {type:"build", correctOrder, scrambled, xp:25}; returns null if insufficient tokens or empty pool
 - generateExercise(words, sentences, difficulty): picks a suitable generator based on difficulty and sentence availability
 

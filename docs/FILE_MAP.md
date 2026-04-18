@@ -35,7 +35,7 @@ _Auto-generated from JSDoc headers in `src/`. Run `python3 scripts/gen_file_map.
 
 **Module:** Topics
 
-**Description:** Static metadata for the 20 topic tiles (id, title, emoji, color). No vocabulary here — words/sentences live in vocab-data.json keyed by the same id.
+**Description:** Static metadata for the 20 topic tiles (id, title, emoji, color). Titles use functional framing ("Greet someone", "Order food") rather than lexical categories, to match how sentences are presented in real interactions. No vocabulary here — words/sentences live in vocab-data.json keyed by the same id.
 
 **Exports:**
 

@@ -6,7 +6,7 @@ _Auto-generated from JSDoc headers in `src/`. Run `python3 scripts/gen_file_map.
 
 **Module:** App
 
-**Description:** Root React component. Owns all UI, state (xp, streak, lessons, SR, learned words, learned sentences), and lesson orchestration. Five screens: home, cards (intro / review / sentence-intro), lesson, result, dict. Sentences are first-class learnables: after a learner has been introduced to BATCH_SIZE words in a topic, startTopic routes them through a sentence-intro batch before the next lesson, and sentence-based exercises draw only from learned sentences (no token-matching filter).
+**Description:** Root React component. Owns all UI, state (xp, streak, lessons, SR, learned words, learned sentences), and lesson orchestration. Five screens: home, cards (intro / review / sentence-intro), lesson, result, dict. Words and sentences are both first-class learnables: startTopic interleaves word-intro batches (BATCH_SIZE words) and sentence-intro batches (SENTENCE_BATCH_SIZE sentences) based on a debt rule so sentences land shortly after the first word batch instead of only after all words are exhausted.
 
 **Exports:**
 

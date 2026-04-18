@@ -1,7 +1,7 @@
 /**
  * @file App.jsx
  * @module App
- * @description Root React component. Owns all UI, state (xp, streak, lessons, SR, learned words, learned sentences), and lesson orchestration. Five screens: home, cards (intro / review / sentence-intro), lesson, result, dict. Sentences are first-class learnables: after a learner has been introduced to BATCH_SIZE words in a topic, startTopic routes them through a sentence-intro batch before the next lesson, and sentence-based exercises draw only from learned sentences (no token-matching filter).
+ * @description Root React component. Owns all UI, state (xp, streak, lessons, SR, learned words, learned sentences), and lesson orchestration. Five screens: home, cards (intro / review / sentence-intro), lesson, result, dict. Words and sentences are both first-class learnables: startTopic interleaves word-intro batches (BATCH_SIZE words) and sentence-intro batches (SENTENCE_BATCH_SIZE sentences) based on a debt rule so sentences land shortly after the first word batch instead of only after all words are exhausted.
  * @exports
  *   - default App(): the root component rendered by main.jsx
  * @depends src/storage.js, src/audio.js, src/sm2.js, src/exercises.js, src/data/topics.js, src/data/vocab-data.json
@@ -102,11 +102,19 @@ export default function App() {
     const remainingSentences = allSentences
       .map((s,i)=>({s,i}))
       .filter(({i})=>!learnedSentIdx.includes(i));
-    if(remaining.length>0){
+    const completedBatches = Math.floor(introducedCount / BATCH_SIZE);
+    const targetLearnedSents = completedBatches * SENTENCE_BATCH_SIZE;
+    const sentenceDebt = targetLearnedSents - learnedSentIdx.length;
+    if(sentenceDebt>0 && remainingSentences.length>0){
+      const take = Math.min(SENTENCE_BATCH_SIZE, remainingSentences.length);
+      setIntroBatch(remainingSentences.slice(0,take).map(({s,i})=>({...s,_idx:i})));
+      setCardsMode("sentence-intro");setCi(0);setScr("cards");
+    } else if(remaining.length>0){
       setIntroBatch(remaining.slice(0,BATCH_SIZE));
       setCardsMode("intro");setCi(0);setScr("cards");
-    } else if(introducedCount>=BATCH_SIZE && remainingSentences.length>0){
-      setIntroBatch(remainingSentences.slice(0,SENTENCE_BATCH_SIZE).map(({s,i})=>({...s,_idx:i})));
+    } else if(remainingSentences.length>0){
+      const take = Math.min(SENTENCE_BATCH_SIZE, remainingSentences.length);
+      setIntroBatch(remainingSentences.slice(0,take).map(({s,i})=>({...s,_idx:i})));
       setCardsMode("sentence-intro");setCi(0);setScr("cards");
     } else {
       const allowedSentences = learnedSentIdx.map(i=>allSentences[i]).filter(Boolean);

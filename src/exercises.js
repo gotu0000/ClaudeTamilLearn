@@ -1,7 +1,7 @@
 /**
  * @file exercises.js
  * @module Exercises
- * @description Pure exercise generators. Four types: word-match, listen, fill-blank, sentence-build. Difficulty-gated in generateExercise: 0=match+listen, 1=+fill, 2=+build. The `sentences` argument is the learner's introduced-sentence slice (not the full topic pool); fill/build only fire when this slice is non-empty.
+ * @description Pure exercise generators. Four types: word-match, listen, fill-blank, sentence-build. Difficulty-gated in generateExercise: 0=match+listen, 1=+fill, 2=+build. The `sentences` argument is the learner's introduced-sentence slice (not the full topic pool); fill/build only fire when this slice is non-empty. genFillBlank is POS-aware: for primitive-backed sentences it blanks a content primitive (verb > destination > pronoun) and offers same-POS distractors; for legacy sentences it uses a stopword filter so the blank never lands on "am/are/is/the/to" etc.
  * @exports
  *   - shuffle(arr): Fisher-Yates copy
  *   - pick(arr, n): shuffled slice of n
@@ -13,6 +13,17 @@
  * @depends (none)
  * @connects Called from App.jsx startTopic / startFromCards / nextStep to build each lesson step.
  */
+const STOPWORDS = new Set([
+  "a","an","the","am","is","are","was","were","be","been","being",
+  "to","of","for","in","on","at","by","with","from",
+  "and","or","but","not","no",
+  "do","does","did","have","has","had",
+  "will","would","can","could","should","may","might",
+  "it","this","that","these","those",
+]);
+
+const stripPunct = (w) => w.replace(/[.,!?;:"']/g, "");
+const isStop = (w) => STOPWORDS.has(stripPunct(w).toLowerCase());
 export function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -65,10 +76,53 @@ export function genFillBlank(words, sentences) {
   const s = sentences[Math.floor(Math.random() * sentences.length)];
   const ew = s.english.split(" ");
   if (ew.length < 3) return genWordMatch(words);
-  const bi = 1 + Math.floor(Math.random() * (ew.length - 1));
-  const blank = ew[bi];
+
+  // Primitive path: blank a content primitive, distractors are same-POS.
+  if (s.primIds && words.some((w) => w._primId)) {
+    const primsInSentence = s.primIds
+      .map((id) => words.find((w) => w._primId === id))
+      .filter(Boolean);
+    const priority = { verb: 0, noun: 1, pronoun: 2 };
+    const ranked = primsInSentence
+      .filter((p) => priority[p.pos] !== undefined)
+      .sort((a, b) => priority[a.pos] - priority[b.pos]);
+    const target = ranked[0];
+    if (target) {
+      const surface = target.pos === "verb" ? target.englishIng : target.english;
+      const bi = ew.findIndex((w) => stripPunct(w).toLowerCase() === surface.toLowerCase());
+      if (bi >= 0) {
+        const blank = stripPunct(ew[bi]);
+        const display = ew.map((w, i) => (i === bi ? "______" : w)).join(" ");
+        const sameSposOthers = words
+          .filter((w) => w.pos === target.pos && w._primId !== target._primId)
+          .map((w) => (w.pos === "verb" ? w.englishIng : w.english))
+          .filter((x) => x && x.toLowerCase() !== blank.toLowerCase());
+        const dist = pick(sameSposOthers, 3);
+        return {
+          type: "fill", tamil: s.tamil, transliteration: s.transliteration || "",
+          display, answer: blank, targetWord: s,
+          options: shuffle([blank, ...dist].slice(0, 4).map((o) => ({ label: o, correct: o === blank }))),
+          xp: 20,
+        };
+      }
+    }
+  }
+
+  // Legacy path: skip stopwords when choosing what to blank.
+  const contentIdx = ew
+    .map((w, i) => ({ w, i }))
+    .filter(({ w }) => !isStop(w))
+    .map(({ i }) => i);
+  if (contentIdx.length === 0) return genWordMatch(words);
+  const bi = contentIdx[Math.floor(Math.random() * contentIdx.length)];
+  const blank = stripPunct(ew[bi]);
   const display = ew.map((w, i) => (i === bi ? "______" : w)).join(" ");
-  const dist = pick(words.map((w) => w.english.split(" / ")[0].split(" ")[0]).filter((w) => w.toLowerCase() !== blank.toLowerCase()), 3);
+  const dist = pick(
+    words
+      .map((w) => w.english.split(" / ")[0].split(" ")[0])
+      .filter((w) => w && !isStop(w) && w.toLowerCase() !== blank.toLowerCase()),
+    3
+  );
   return {
     type: "fill", tamil: s.tamil, transliteration: s.transliteration,
     display, answer: blank, targetWord: s,

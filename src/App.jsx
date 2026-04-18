@@ -97,10 +97,14 @@ export default function App() {
   const buildPrimPool = useCallback((topicId, pids) => {
     const topic = primData.topics[topicId]; if(!topic) return {words:[],sentences:[]};
     const all = primData.primitives;
-    const words = pids.filter(id=>all[id]).map(id=>({
-      tamil: all[id].tamil, transliteration: all[id].transliteration, english: all[id].english,
-      topicId, _primId: id,
-    }));
+    const words = pids.filter(id=>all[id]).map(id=>{
+      const p = all[id];
+      return {
+        tamil: p.tamil, transliteration: p.transliteration, english: p.english,
+        englishIng: p.englishIng || null, pos: p.pos,
+        topicId, _primId: id,
+      };
+    });
     const sentences = enumerateSentences(all, new Set(pids), topic).map(s=>({
       tamil: s.tamil, transliteration: "", english: s.english,
       tokens: s.tokens, primIds: s.primIds, templateId: s.templateId,

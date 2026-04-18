@@ -6,7 +6,7 @@ _Auto-generated from JSDoc headers in `src/`. Run `python3 scripts/gen_file_map.
 
 **Module:** App
 
-**Description:** Root React component. Owns all UI, state (xp, streak, lessons, SR, learned words), and lesson orchestration. Five screens: home, cards, lesson, result, dict.
+**Description:** Root React component. Owns all UI, state (xp, streak, lessons, SR, learned words, learned sentences), and lesson orchestration. Five screens: home, cards (intro / review / sentence-intro), lesson, result, dict. Sentences are first-class learnables: after a learner has been introduced to BATCH_SIZE words in a topic, startTopic routes them through a sentence-intro batch before the next lesson, and sentence-based exercises draw only from learned sentences (no token-matching filter).
 
 **Exports:**
 
@@ -35,7 +35,7 @@ _Auto-generated from JSDoc headers in `src/`. Run `python3 scripts/gen_file_map.
 
 **Module:** Topics
 
-**Description:** Static metadata for the 20 topic tiles (id, title, emoji, color). No vocabulary here — words/sentences live in vocab-data.json keyed by the same id.
+**Description:** Static metadata for the 20 topic tiles (id, title, emoji, color). Titles use functional framing ("Greet someone", "Order food") rather than lexical categories, to match how sentences are presented in real interactions. No vocabulary here — words/sentences live in vocab-data.json keyed by the same id.
 
 **Exports:**
 
@@ -49,7 +49,7 @@ _Auto-generated from JSDoc headers in `src/`. Run `python3 scripts/gen_file_map.
 
 **Module:** Exercises
 
-**Description:** Pure exercise generators. Four types: word-match, listen, fill-blank, sentence-build. Difficulty-gated in generateExercise: 0=match+listen, 1=+fill, 2=+build.
+**Description:** Pure exercise generators. Four types: word-match, listen, fill-blank, sentence-build. Difficulty-gated in generateExercise: 0=match+listen, 1=+fill, 2=+build. The `sentences` argument is the learner's introduced-sentence slice (not the full topic pool); fill/build only fire when this slice is non-empty.
 
 **Exports:**
 
@@ -100,7 +100,7 @@ _Auto-generated from JSDoc headers in `src/`. Run `python3 scripts/gen_file_map.
 
 **Exports:**
 
-- KEYS: constant map of namespaced storage keys (XP, STREAK, LAST_DAY, TOPIC_LESSONS, SR_DATA, LEARNED_WORDS)
+- KEYS: constant map of namespaced storage keys (XP, STREAK, LAST_DAY, TOPIC_LESSONS, SR_DATA, LEARNED_WORDS, LEARNED_SENTENCES)
 - storageGet(key, fallback): read + JSON.parse + fall back on miss/error
 - storageSet(key, value): JSON.stringify + write (errors logged, not thrown)
 - storageClear(): remove every `tamillearn:` key

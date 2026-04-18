@@ -80,7 +80,7 @@ _Auto-generated from JSDoc headers in `src/`. Run `python3 scripts/gen_file_map.
 
 **Module:** Exercises
 
-**Description:** Pure exercise generators. Four types: word-match, listen, fill-blank, sentence-build. Difficulty-gated in generateExercise: 0=match+listen, 1=+fill, 2=+build. The `sentences` argument is the learner's introduced-sentence slice (not the full topic pool); fill/build only fire when this slice is non-empty.
+**Description:** Pure exercise generators. Four types: word-match, listen, fill-blank, sentence-build. Difficulty-gated in generateExercise: 0=match+listen, 1=+fill, 2=+build. The `sentences` argument is the learner's introduced-sentence slice (not the full topic pool); fill/build only fire when this slice is non-empty. genFillBlank is POS-aware: for primitive-backed sentences it blanks a content primitive (verb > destination > pronoun) and offers same-POS distractors; for legacy sentences it uses a stopword filter so the blank never lands on "am/are/is/the/to" etc.
 
 **Exports:**
 

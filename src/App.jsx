@@ -111,7 +111,7 @@ export default function App() {
       const p = all[id];
       return {
         tamil: p.tamil, transliteration: p.transliteration, english: p.english,
-        englishIng: p.englishIng || null, pos: p.pos,
+        englishIng: p.englishIng || null, pos: p.pos, disambig: p.disambig || null,
         topicId, _primId: id,
       };
     });

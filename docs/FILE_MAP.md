@@ -6,7 +6,7 @@ _Auto-generated from JSDoc headers in `src/`. Run `python3 scripts/gen_file_map.
 
 **Module:** App
 
-**Description:** Root React component. Owns all UI, state (xp, streak, lessons, SR, learned words, learned sentences, learned primitives), and lesson orchestration. Five screens: home, cards (intro / review / sentence-intro / primitive-intro), lesson, result, dict. Two content backends run side by side: legacy vocab-data.json drives the original 19 topics with word-and-sentence intros; the new primitive-backed grammar engine drives the pilot topic (travel / "Get around"), showing primitives on intro cards and composing exercise sentences at runtime via engine/templates.js.
+**Description:** Root React component. Owns all UI, state (xp, streak, lessons, SR, learned words, learned sentences, learned primitives), and lesson orchestration. Five screens: home, cards (intro / review / sentence-intro / primitive-intro), lesson, result, dict. Two content backends run side by side: legacy vocab-data.json drives the original 19 themed topics with word-and-sentence intros; the primitive-backed grammar engine drives foundation decks (`pronouns`, `qwords`) and composed topics (`travel`), showing primitives on intro cards and composing exercise sentences at runtime via engine/templates.js. Dictionary view exposes a Reset button that clears every `tamillearn:` key via storage.storageClear().
 
 **Exports:**
 

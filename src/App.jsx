@@ -209,6 +209,13 @@ export default function App() {
         const add = introBatch.map(p=>p._primId).filter(id=>id && !npl.includes(id));
         npl = [...npl, ...add];
         setLearnedPrimitives(npl); saveAll({learnedPrimitives:npl});
+        const nw = [...learned];
+        introBatch.forEach(p=>{
+          if(!nw.find(l=>l.tamil===p.tamil&&l.topicId===curT.id)){
+            nw.push({tamil:p.tamil, transliteration:p.transliteration, english:p.english, topicId:curT.id});
+          }
+        });
+        if(nw.length!==learned.length){ setLearned(nw); saveAll({learned:nw}); }
       }
       const pool = buildPrimPool(curT.id, npl);
       const d = Math.min(Math.floor((tLessons[curT.id]||0)/3),2);
@@ -339,7 +346,7 @@ export default function App() {
             </div>
             <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:12}}>
               <button onClick={()=>setDTopic("all")} style={{padding:"5px 10px",borderRadius:8,border:`1px solid ${dTopic==="all"?V.acc:V.bdr}`,background:dTopic==="all"?V.acc+"22":"transparent",color:dTopic==="all"?V.acc:V.dim,fontSize:11,cursor:"pointer",fontFamily:V.fn}}>All</button>
-              {TOPICS.filter(t=>vocabData[t.id]).map(t=>(<button key={t.id} onClick={()=>setDTopic(t.id)} style={{padding:"5px 10px",borderRadius:8,border:`1px solid ${dTopic===t.id?t.color:V.bdr}`,background:dTopic===t.id?t.color+"22":"transparent",color:dTopic===t.id?t.color:V.dim,fontSize:11,cursor:"pointer",fontFamily:V.fn}}>{t.emoji}</button>))}
+              {TOPICS.filter(t=>vocabData[t.id]||primData.topics[t.id]).map(t=>(<button key={t.id} onClick={()=>setDTopic(t.id)} style={{padding:"5px 10px",borderRadius:8,border:`1px solid ${dTopic===t.id?t.color:V.bdr}`,background:dTopic===t.id?t.color+"22":"transparent",color:dTopic===t.id?t.color:V.dim,fontSize:11,cursor:"pointer",fontFamily:V.fn}}>{t.emoji}</button>))}
             </div>
             {fW.length===0?<div style={{textAlign:"center",padding:32,color:V.dim}}>{learned.length===0?"Complete a lesson to start your dictionary!":"No matches."}</div>:(
               <div style={{display:"flex",flexDirection:"column",gap:8}}>{fW.map((w,i)=>(<div key={i} style={{background:V.card,borderRadius:14,padding:"12px 14px",border:`1px solid ${V.bdr}`,display:"flex",alignItems:"center",gap:10}}><div style={{flex:1}}><div style={{fontFamily:V.ft,fontSize:18,fontWeight:700}}>{w.tamil}</div><div style={{fontSize:11,color:V.dim,fontStyle:"italic"}}>{w.transliteration}</div><div style={{fontSize:13,color:"#aaa",marginTop:1}}>{w.english}</div></div><Spk text={w.tamil} topicId={w.topicId} size={14}/></div>))}</div>

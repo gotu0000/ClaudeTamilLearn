@@ -1,7 +1,7 @@
 /**
  * @file exercises.js
  * @module Exercises
- * @description Pure exercise generators. Four types: word-match, listen, fill-blank, sentence-build. Difficulty-gated in generateExercise: 0=match+listen, 1=+fill, 2=+build. The `sentences` argument is the learner's introduced-sentence slice (not the full topic pool); fill/build only fire when this slice is non-empty. genFillBlank is POS-aware: for primitive-backed sentences it blanks a content primitive (verb > destination > pronoun) and offers same-POS distractors; for legacy sentences it uses a stopword filter so the blank never lands on "am/are/is/the/to" etc. Fill exercises carry `blankTamil` (the Tamil token being asked about) and `grammarTip` (a one-line rule explaining its ending, from engine/grammar-tips.js).
+ * @description Pure exercise generators. Four types: word-match, listen, fill-blank, sentence-build. Difficulty-gated in generateExercise: 0=match+listen, 1=+fill, 2=+build. The `sentences` argument is the learner's introduced-sentence slice (not the full topic pool); fill/build only fire when this slice is non-empty. genFillBlank is POS-aware: for primitive-backed sentences it blanks a content primitive (verb > destination > pronoun) and offers same-POS distractors; for legacy sentences it uses a stopword filter so the blank never lands on "am/are/is/the/to" etc. Fill exercises carry `blankTamil` (the Tamil token being asked about) and `grammarTip` (a one-line rule explaining its ending, from engine/grammar-tips.js). Word-match / listen option labels route through `englishLabel()` so primitives carrying a `disambig` field (e.g. நீ → "you (informal/singular)" vs நீங்க → "you (plural/polite)") are distinguishable; sentences and fill-blank answers still use the plain `english`.
  * @exports
  *   - shuffle(arr): Fisher-Yates copy
  *   - pick(arr, n): shuffled slice of n
@@ -26,6 +26,7 @@ const STOPWORDS = new Set([
 
 const stripPunct = (w) => w.replace(/[.,!?;:"']/g, "");
 const isStop = (w) => STOPWORDS.has(stripPunct(w).toLowerCase());
+const englishLabel = (w) => w && w.disambig ? `${w.english} (${w.disambig})` : (w ? w.english : "");
 export function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -45,13 +46,13 @@ export function genWordMatch(words) {
   const dir = Math.random() > 0.5 ? "t2e" : "e2t";
   return {
     type: "word-match", dir,
-    prompt: dir === "t2e" ? target.tamil : target.english,
+    prompt: dir === "t2e" ? target.tamil : englishLabel(target),
     promptSub: dir === "t2e" ? target.transliteration : null,
-    answer: dir === "t2e" ? target.english : target.tamil,
+    answer: dir === "t2e" ? englishLabel(target) : target.tamil,
     answerSub: dir === "e2t" ? target.transliteration : null,
     targetWord: target,
     options: shuffle(pool.map((w) => ({
-      label: dir === "t2e" ? w.english : w.tamil,
+      label: dir === "t2e" ? englishLabel(w) : w.tamil,
       sub: dir === "e2t" ? w.transliteration : null,
       correct: w === target,
     }))),
@@ -67,8 +68,8 @@ export function genListen(words, sentences) {
     targetWord: target,
     tamil: target.tamil,
     transliteration: target.transliteration,
-    answer: target.english,
-    options: shuffle(pool.map((p) => ({ label: p.english, correct: p === target }))),
+    answer: englishLabel(target),
+    options: shuffle(pool.map((p) => ({ label: englishLabel(p), correct: p === target }))),
     xp: 15,
   };
 }

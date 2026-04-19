@@ -1,11 +1,11 @@
 {
   "primitives": {
     "pron-1s":  { "pos":"pronoun", "tamil":"நான்",  "transliteration":"naan",    "english":"I",   "agreement":"1s",  "be":"am",  "beCap":"Am",  "audioText":"நான்" },
-    "pron-2s":  { "pos":"pronoun", "tamil":"நீ",    "transliteration":"nee",     "english":"you", "agreement":"2s",  "be":"are", "beCap":"Are", "audioText":"நீ" },
+    "pron-2s":  { "pos":"pronoun", "tamil":"நீ",    "transliteration":"nee",     "english":"you", "disambig":"informal/singular", "agreement":"2s",  "be":"are", "beCap":"Are", "audioText":"நீ" },
     "pron-3sm": { "pos":"pronoun", "tamil":"அவன்",  "transliteration":"avan",    "english":"he",  "agreement":"3sm", "be":"is",  "beCap":"Is",  "audioText":"அவன்" },
     "pron-3sf": { "pos":"pronoun", "tamil":"அவ",    "transliteration":"ava",     "english":"she", "agreement":"3sf", "be":"is",  "beCap":"Is",  "audioText":"அவ" },
     "pron-1pl": { "pos":"pronoun", "tamil":"நாம",   "transliteration":"naama",   "english":"we",  "agreement":"1pl", "be":"are", "beCap":"Are", "audioText":"நாம" },
-    "pron-2pl": { "pos":"pronoun", "tamil":"நீங்க", "transliteration":"neenga",  "english":"you", "agreement":"2pl", "be":"are", "beCap":"Are", "audioText":"நீங்க" },
+    "pron-2pl": { "pos":"pronoun", "tamil":"நீங்க", "transliteration":"neenga",  "english":"you", "disambig":"plural/polite", "agreement":"2pl", "be":"are", "beCap":"Are", "audioText":"நீங்க" },
 
     "v-go": {
       "pos":"verb", "tamil":"போ", "transliteration":"pō", "english":"go", "englishIng":"going",

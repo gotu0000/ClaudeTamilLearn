@@ -3,37 +3,42 @@
 ## Project Overview
 A Duolingo-style Tamil learning app for English speakers who want to understand spoken Tamil (especially Tamil movies). Offline-first, designed for eventual iOS App Store release via Capacitor.
 
+## Status
+**v2 rebuild in progress, engine first.** The codebase was reset to an empty canvas: `src/` holds only the entry point and a placeholder screen.
+
+The v1 app (topic grid, `vocab-data.json`, primitive grammar engine, SM-2, Sarvam TTS audio pipeline) lives at commit `292d3be`. Bring a piece back deliberately when the new engine needs it, e.g. `git checkout 292d3be -- src/sm2.js`.
+
+### Lessons from v1 (inputs to the engine design)
+- Build every exercise only from what the learner has been taught. v1's hand-written sentences leaked untaught words ("home" showed up in the Verbs topic).
+- One content model, not two. v1 ran hand-written vocabulary and a grammar engine side by side, and they drifted apart.
+- English glosses collide (நீ and நீங்க are both "you"), so the content model needs a disambiguator from day one.
+- v1 progress is still on devices under `tamillearn:*` localStorage keys. v2 storage needs a new namespace or a schema-version key so stale v1 data is never misread.
+
 ## Tech Stack
 - **Frontend**: React 18 + Vite (single-page app)
-- **Styling**: Inline styles with design tokens (no CSS framework)
-- **Storage**: localStorage via abstraction layer (`src/storage.js`)
-- **Audio**: Pre-generated MP3 files via Sarvam AI TTS API (stored in `public/audio/`)
-- **Spaced Repetition**: SM-2 algorithm (`src/sm2.js`)
+- **Styling**: Inline styles (no CSS framework)
 - **Deployment**: GitHub Pages via GitHub Actions
+- **Storage, audio, spaced repetition**: to be decided in the v2 engine design (v1 used localStorage, pre-generated Sarvam TTS MP3s and SM-2)
 
 ## Project Structure
 ```
 ├── CLAUDE.md                    # This file
 ├── package.json
-├── vite.config.js
-├── index.html
-├── .github/workflows/deploy.yml # Auto-deploy to GitHub Pages
-├── public/
-│   └── audio/                   # Pre-generated Tamil audio MP3s
+├── vite.config.js               # GitHub Pages base path
+├── index.html                   # Fonts (Noto Sans Tamil, DM Sans), SPA path restore
+├── .github/workflows/
+│   ├── deploy.yml               # Build + deploy to GitHub Pages on push to main
+│   └── file-map-check.yml       # Fails if docs/FILE_MAP.md is out of sync
+├── public/                      # 404.html (SPA redirect), .nojekyll
 ├── src/
 │   ├── main.jsx                 # Entry point
-│   ├── App.jsx                  # Main app component
-│   ├── storage.js               # localStorage abstraction
-│   ├── audio.js                 # Audio playback engine
-│   ├── sm2.js                   # Spaced repetition algorithm
-│   ├── exercises.js             # Exercise generators (pure functions)
-│   └── data/
-│       ├── topics.js            # Topic definitions (20 topics)
-│       └── vocab-data.json      # Vocabulary data (words + sentences)
-├── scripts/
-│   ├── generate_vocab.py        # Generate vocabulary via Anthropic API
-│   └── generate_audio.py        # Generate audio via Sarvam TTS API
-└── README.md
+│   └── App.jsx                  # Placeholder screen
+├── docs/
+│   └── FILE_MAP.md              # Auto-generated per-file reference
+└── scripts/
+    ├── gen_file_map.py          # Builds docs/FILE_MAP.md from JSDoc headers
+    ├── setup-hooks.sh           # Installs git hooks
+    └── git-hooks/pre-commit     # FILE_MAP check
 ```
 
 ## Key Commands
@@ -43,47 +48,6 @@ npm run dev          # Start dev server at localhost:3000
 npm run build        # Production build to dist/
 npm run preview      # Preview production build
 ```
-
-## Vocabulary Generation
-```bash
-export ANTHROPIC_API_KEY="sk-ant-..."
-python3 scripts/generate_vocab.py
-# Outputs: src/data/vocab-data.json
-# Crash-safe: saves after each topic, re-run to continue
-```
-
-## Audio Generation
-```bash
-export SARVAM_API_KEY="your-key"
-python3 scripts/generate_audio.py
-# Reads: src/data/vocab-data.json
-# Outputs: public/audio/{topic_id}/{hash}.mp3
-# Generates normal (1.0x) and slow (0.7x) speed per word
-```
-
-## Architecture Notes
-
-### Exercise Types (progressive difficulty)
-- **difficulty 0**: word-match (Tamil↔English), listen-and-pick
-- **difficulty 1**: + fill-in-the-blank
-- **difficulty 2**: + sentence reconstruction
-
-### Data Flow
-```
-vocab-data.json (static) → exercises.js (generates quizzes) → App.jsx (UI)
-                          → sm2.js (tracks mastery per word)
-                          → storage.js (persists progress in localStorage)
-```
-
-### Audio File Naming
-Files are named by MD5 hash of the Tamil text: `public/audio/{topic_id}/{md5}.mp3`
-Slow versions: `public/audio/{topic_id}/{md5}_slow.mp3`
-
-### Design Tokens
-All colors, fonts, spacing defined in `V` object at top of `App.jsx`. Dark theme with:
-- Background: `#0B0B1A`
-- Accent: `#FF6B35` (orange)
-- Fonts: 'Noto Sans Tamil' for Tamil text, 'DM Sans' for UI
 
 ## Coding Standards
 - Pure functions for exercise generation (no side effects)
